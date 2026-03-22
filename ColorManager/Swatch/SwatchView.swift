@@ -11,8 +11,12 @@ struct SwatchView: View
 {
     @State var ColorID: UUID? = nil
     @State var SwatchColor: Color = .red
-    @State var SwatchColorName: String = "Test Name"
+    @State var SwatchColorName: String = "Test Name That Is Too Long"
     @State var SwatchWidth: CGFloat = 96
+    @State var SwatchHeaderHeight: CGFloat = 48
+    @State var ShowShadow: Bool = true
+    @State var CanTap: Bool = true
+    
     var body: some View
     {
         VStack
@@ -23,14 +27,25 @@ struct SwatchView: View
             }
             else
             {
-                SwatchHeader(ColorName: SwatchColorName)
-                    .padding(2)
+                SwatchHeader(ColorName: SwatchColorName,
+                             SwatchWidth: SwatchWidth,
+                             HeaderHeight: SwatchHeaderHeight)
+                .padding(.bottom, -8)
                 SwatchColorView(TheColor: SwatchColor,
                                 SideLength: SwatchWidth)
             }
         }
         .frame(width: SwatchWidth)
         .border(Color(.black))
+        .background(.white)
+        .compositingGroup()
+        .shadow(color: Color.black.opacity(ShowShadow ? 0.4 : 0.0),
+                radius: 2,
+                x: 2, y: 2)
+        .onTapGesture
+        {
+            print("\(SwatchColorName) tapped")
+        }
     }
 }
 

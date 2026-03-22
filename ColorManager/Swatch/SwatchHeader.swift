@@ -10,44 +10,44 @@ import SwiftUI
 struct SwatchHeader: View
 {
     @State var ColorName: String = "Name of Color"
+    @State var ColorValue: String = "0x000000"
+    @State var ShowColorValue: Bool = true
     @State var SwatchWidth: CGFloat = 96
-    @State var HeaderHeight: CGFloat = 32
+    @State var HeaderHeight: CGFloat = 38
+    @State var BackgroundColor: Color = Color(UIColor.yellow)
     
     var body: some View
     {
-        ZStack
+        VStack
         {
-            HStack
+            HStack(alignment: .top)
             {
                 Text(ColorName)
-                    .font(.caption)
+                    .font(.system(size: 13))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
+                    .padding(.leading, 2)
                 Spacer()
             }
-            .frame(width: SwatchWidth - 16)
-            VStack
+            Spacer()
+            if ShowColorValue
             {
-                HStack
+                HStack(alignment: .bottom)
                 {
+                    Text(ColorValue)
+                        .font(.system(size: 11))
+                        .monospaced()
+                        .padding(.leading, 2)
                     Spacer()
-                    Button(action:
-                            {
-                        
-                    })
-                    {
-                        Image(systemName: "info.circle")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                    }
                 }
-                Spacer()
             }
         }
-        .background(Color.white)
-        .frame(height: HeaderHeight)
+        .frame(width: SwatchWidth, height: HeaderHeight + 4)
+        .background(BackgroundColor)
     }
 }
 
 #Preview
 {
-    SwatchHeader(ColorName: "Long color name here")
+    SwatchHeader(ColorName: "fred")//"Long color name here")
 }
