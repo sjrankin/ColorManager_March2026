@@ -16,6 +16,7 @@ struct SwatchView: View
     @State var SwatchHeaderHeight: CGFloat = 48
     @State var ShowShadow: Bool = true
     @State var CanTap: Bool = true
+    let CornerRadius: CGFloat = 2.0
     
     var body: some View
     {
@@ -36,8 +37,11 @@ struct SwatchView: View
             }
         }
         .frame(width: SwatchWidth)
-        .border(Color(.black))
         .background(.white)
+        .border(Color(.black))
+        .cornerRadius(CornerRadius)
+        .overlay(RoundedRectangle(cornerRadius: CornerRadius)
+            .stroke(.black, lineWidth: 1.0))
         .compositingGroup()
         .shadow(color: Color.black.opacity(ShowShadow ? 0.4 : 0.0),
                 radius: 2,

@@ -14,7 +14,7 @@ struct SwatchHeader: View
     @State var ShowColorValue: Bool = true
     @State var SwatchWidth: CGFloat = 96
     @State var HeaderHeight: CGFloat = 38
-    @State var BackgroundColor: Color = Color(UIColor.yellow)
+    @State var BackgroundColor: Color = .white
     
     var body: some View
     {
