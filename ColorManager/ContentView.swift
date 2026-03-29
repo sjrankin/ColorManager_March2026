@@ -6,13 +6,22 @@
 //
 
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct ContentView: View
 {
     @State var ShowEditor: Bool = false
     @State var SearchColor: Bool = false
     @State var ShowCameraMatchView: Bool = false
+    #if os(macOS)
+    @State var PaletteBackground: Color = Color(nsColor: NSColor.controlBackgroundColor)
+    #else
     @State var PaletteBackground: Color = Color(UIColor.systemGray5)
+    #endif
     
     let PaletteColumns = [GridItem(.adaptive(minimum: 90))]
     
@@ -29,6 +38,7 @@ struct ContentView: View
                     ShowEditor.toggle()
                 }
                 .buttonStyle(.glassProminent)
+                
                 Button(action:
                         {
                     ShowCameraMatchView.toggle()
@@ -38,6 +48,7 @@ struct ContentView: View
                         .foregroundColor(.white)
                 }
                 .buttonStyle(.glassProminent)
+                
                 Button(action:
                         {
                     ShowCameraMatchView.toggle()
@@ -47,6 +58,7 @@ struct ContentView: View
                         .foregroundColor(.white)
                 }
                 .buttonStyle(.glassProminent)
+                
                 Button(action:
                         {
                     
@@ -57,6 +69,7 @@ struct ContentView: View
                 }
                 .buttonStyle(.glassProminent)
                 .padding(.trailing, 10)
+                
                 Button(action:
                         {
                     
@@ -66,6 +79,7 @@ struct ContentView: View
                         .foregroundColor(.white)
                 }
                 .buttonStyle(.glassProminent)
+                
                 Button(action:
                         {
                     
@@ -79,6 +93,7 @@ struct ContentView: View
             }
             .padding(.leading, 10)
             .padding(.trailing, 10)
+            .padding(.top, 2)
         }
         ScrollView
         {
@@ -100,16 +115,16 @@ struct ContentView: View
                            SwatchColorName: "Really Dark Pink",
                            SwatchWidth: SwatchSize)
                 .padding(4)
-                SwatchView(SwatchColor: Color(UIColor.systemYellow),
-                           SwatchColorName: "SystemYellow",
+                SwatchView(SwatchColor: TestColor.GetColor(.SystemYellow),
+                           SwatchColorName: TestColor.GetColorName(.SystemYellow),
                            SwatchWidth: SwatchSize)
                 .padding(4)
-                SwatchView(SwatchColor: Color(UIColor(red: 188.0 / 255.0, green: 0, blue: 45.0 / 255.0, alpha: 1.0)),
-                           SwatchColorName: "Japanese Flag Red",
+                SwatchView(SwatchColor: TestColor.GetColor(.JapaneseFlagRed),
+                           SwatchColorName: TestColor.GetColorName(.JapaneseFlagRed),
                            SwatchWidth: SwatchSize)
                 .padding(4)
-                SwatchView(SwatchColor: Color(UIColor(red: 198.0 / 255.0, green: 50.0 / 255.0, blue: 87.0 / 255.0, alpha: 1.0)),
-                           SwatchColorName: "Really really long color name here",
+                SwatchView(SwatchColor: TestColor.GetColor(.ReallyLongColorName),
+                           SwatchColorName: TestColor.GetColorName(.ReallyLongColorName),
                            SwatchWidth: SwatchSize)
                 .padding(4)
             }

@@ -6,8 +6,8 @@ import UIKit
 #endif
 
 #if canImport(UIKit)
-    typealias PlatformColor = UIColor
+    public typealias PlatformColor = UIColor
 #elseif canImport(AppKit)
-    typealias PlatformColor = NSColor
+    public typealias PlatformColor = NSColor
 #endif
 
