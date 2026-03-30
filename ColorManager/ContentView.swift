@@ -27,6 +27,70 @@ struct ContentView: View
     
     var SwatchSize: CGFloat = 90
     
+    // MARK: - Helper Functions
+    
+    /// Recursively count all colors in a ColorGroup, including nested groups and collections
+    private func countColorsInGroup(_ group: ColorGroup) -> Int
+    {
+        var count = 0
+        
+        // Count colors directly in this group
+        if let colors = group.Colors
+        {
+            count += colors.count
+        }
+        
+        // Recursively count colors in nested groups
+        if let nestedGroups = group.Groups
+        {
+            for nestedGroup in nestedGroups
+            {
+                count += countColorsInGroup(nestedGroup)
+            }
+        }
+        
+        // Recursively count colors in collections
+        if let collections = group.Collections
+        {
+            for collection in collections
+            {
+                count += countColorsInCollection(collection)
+            }
+        }
+        
+        return count
+    }
+    
+    /// Recursively count all colors in a ColorCollection, including nested collections
+    private func countColorsInCollection(_ collection: ColorCollection) -> Int
+    {
+        var count = 0
+        
+        // Count colors directly in this collection
+        if let colors = collection.Colors
+        {
+            count += colors.count
+        }
+        
+        // Recursively count colors in nested collections
+        if let nestedCollections = collection.Collections
+        {
+            for nestedCollection in nestedCollections
+            {
+                count += countColorsInCollection(nestedCollection)
+            }
+        }
+        
+        return count
+    }
+    
+    /// Count all colors in the entire Colors structure
+    private func countAllColors(_ colors: Colors) -> Int
+    {
+        guard let groups = colors.ColorGroups else { return 0 }
+        return groups.reduce(0) { $0 + countColorsInGroup($1) }
+    }
+    
     var body: some View
     {
         VStack
@@ -72,7 +136,41 @@ struct ContentView: View
                 
                 Button(action:
                         {
-                    
+                    //import
+                    ColorListIO.importColorList
+                    {
+                        result in
+                        switch result
+                        {
+                        case .success(let importedData):
+                            // Handle successful import based on import type
+                            switch importedData.importType
+                                {
+                            case .fullStructure:
+                                if let fullColors = importedData.fullColors
+                                    {
+                                    print("Successfully imported full color structure from \(importedData.sourceFileName ?? "unknown")")
+                                    let totalColors = countAllColors(fullColors)
+                                    let groupCount = fullColors.ColorGroups?.count ?? 0
+                                    print("Total colors: \(totalColors) in \(groupCount) top-level groups")
+                                }
+                            case .groups:
+                                if let groups = importedData.colorGroups
+                                    {
+                                    let totalColors = groups.reduce(0) { $0 + countColorsInGroup($1) }
+                                    print("Successfully imported \(groups.count) color groups with \(totalColors) colors")
+                                }
+                            case .records:
+                                if let records = importedData.colorRecords
+                                    {
+                                    print("Successfully imported \(records.count) color records")
+                                }
+                            }
+                        case .failure(let error):
+                            // Handle error
+                            print("Import failed: \(error.localizedDescription)")
+                        }
+                    }
                 })
                 {
                     Image(systemName: "square.and.arrow.down")
