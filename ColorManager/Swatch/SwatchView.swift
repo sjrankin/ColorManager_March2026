@@ -9,7 +9,9 @@ import SwiftUI
 
 struct SwatchView: View
 {
-    @State var ColorID: UUID? = nil
+    @State var ColorID: UUID?
+    @Binding var SelectedID: UUID
+    var InstanceID = UUID()
     @State var SwatchColor: Color = .red
     @State var SwatchColorName: String = "Test Name That Is Too Long"
     @State var SwatchWidth: CGFloat = 96
@@ -17,43 +19,77 @@ struct SwatchView: View
     @State var ShowShadow: Bool = true
     @State var CanTap: Bool = true
     let CornerRadius: CGFloat = 2.0
+    @State var ShadowColor: Color = .black.opacity(0.4)
+    @State var BorderColor: Color = .black
+    @State var BorderThickness: CGFloat = 1.0
+    @State var SwatchHeaderBackground: Color = .gray.opacity(0.15)
+    @State var ShadowRadius: CGFloat = 2.0
+    @State var ShadowXOffset: CGFloat = 2.0
+    @State var ShadowYOffset: CGFloat = 2.0
     
     var body: some View
     {
         VStack
         {
-            if let ColorID = ColorID
-            {
-                // Get the color from the color manager and use that data here
-            }
-            else
-            {
-                SwatchHeader(ColorName: SwatchColorName,
-                             SwatchWidth: SwatchWidth,
-                             HeaderHeight: SwatchHeaderHeight)
-                .padding(.bottom, -8)
-                SwatchColorView(TheColor: SwatchColor,
-                                SideLength: SwatchWidth)
-            }
+            SwatchHeader(ColorName: SwatchColorName,
+                         SwatchWidth: SwatchWidth,
+                         HeaderHeight: SwatchHeaderHeight,
+                         BackgroundColor: $SwatchHeaderBackground)
+            .padding(.bottom, -8)
+            SwatchColorView(TheColor: SwatchColor,
+                            SideLength: SwatchWidth)
         }
         .frame(width: SwatchWidth)
         .background(.white)
-        .border(Color(.black))
+        .border(BorderColor)
         .cornerRadius(CornerRadius)
         .overlay(RoundedRectangle(cornerRadius: CornerRadius)
-            .stroke(.black, lineWidth: 1.0))
+            .stroke(BorderColor, lineWidth: BorderThickness))
         .compositingGroup()
-        .shadow(color: Color.black.opacity(ShowShadow ? 0.4 : 0.0),
-                radius: 2,
-                x: 2, y: 2)
+        .shadow(color: ShadowColor,
+                radius: ShadowRadius,
+                x: ShadowXOffset,
+                y: ShadowYOffset)
         .onTapGesture
         {
-            print("\(SwatchColorName) tapped")
+            SelectedID = InstanceID
+        }
+        .onChange(of: SelectedID)
+        {
+            old, new in
+            if new == InstanceID
+            {
+                SwatchHeaderBackground = .white
+                BorderThickness = 2.0
+                #if os(macOS)
+                BorderColor = Color(nsColor: NSColor.controlAccentColor)
+                ShadowColor = SwatchColor
+                #else
+                BorderColor = Color(UIColor.tintColor)
+                ShadowColor = SwatchColor
+                #endif
+                ShadowRadius = 4.0
+                ShadowXOffset = 0.0
+                ShadowYOffset = 0.0
+            }
+            else
+            {
+                SwatchHeaderBackground = .gray.opacity(0.15)
+                BorderThickness = 1.0
+                BorderColor = .black
+                ShadowColor = .black.opacity(0.4)
+                ShadowRadius = 2.0
+                ShadowXOffset = 2.0
+                ShadowYOffset = 2.0
+            }
         }
     }
 }
 
-#Preview {
-    SwatchView(SwatchColor: .indigo,
+#Preview
+{
+    @Previewable @State var SwatchID: UUID = UUID()
+    SwatchView(SelectedID: $SwatchID,
+               SwatchColor: .indigo,
                SwatchWidth: 86)
 }

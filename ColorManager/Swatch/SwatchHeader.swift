@@ -14,7 +14,7 @@ struct SwatchHeader: View
     @State var ShowColorValue: Bool = true
     @State var SwatchWidth: CGFloat = 96
     @State var HeaderHeight: CGFloat = 38
-    @State var BackgroundColor: Color = .white
+    @Binding var BackgroundColor: Color
     
     var body: some View
     {
@@ -49,5 +49,6 @@ struct SwatchHeader: View
 
 #Preview
 {
-    SwatchHeader(ColorName: "fred")//"Long color name here")
+    @Previewable @State var BGColor = Color.white
+    SwatchHeader(ColorName: "fred", BackgroundColor: $BGColor)
 }

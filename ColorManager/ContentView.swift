@@ -17,6 +17,7 @@ struct ContentView: View
     @State var ShowEditor: Bool = false
     @State var SearchColor: Bool = false
     @State var ShowCameraMatchView: Bool = false
+    @State var SelectedSwatch: UUID = UUID.empty
     #if os(macOS)
     @State var PaletteBackground: Color = Color(nsColor: NSColor.controlBackgroundColor)
     #else
@@ -93,15 +94,24 @@ struct ContentView: View
     
     var body: some View
     {
-        VStack
+        VStack(spacing: 0)
         {
-            HStack
+            // Toolbar area with visible background
+            HStack(spacing: 8)
             {
-                Button("Edit")
+                Button(action:
+                        {
+                })
                 {
-                    ShowEditor.toggle()
+                    Text("Edit")
                 }
-                .buttonStyle(.glassProminent)
+                .help("Edit the selected color")
+                #if os(macOS)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                #else
+                .buttonStyle(.borderedProminent)
+                #endif
                 
                 Button(action:
                         {
@@ -109,9 +119,14 @@ struct ContentView: View
                 })
                 {
                     Image(systemName: "camera")
-                        .foregroundColor(.white)
                 }
-                .buttonStyle(.glassProminent)
+                .help("Use the system's camera to match a color")
+                #if os(macOS)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                #else
+                .buttonStyle(.bordered)
+                #endif
                 
                 Button(action:
                         {
@@ -119,9 +134,14 @@ struct ContentView: View
                 })
                 {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.white)
                 }
-                .buttonStyle(.glassProminent)
+                .help("Search for colors")
+                #if os(macOS)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                #else
+                .buttonStyle(.bordered)
+                #endif
                 
                 Button(action:
                         {
@@ -129,9 +149,14 @@ struct ContentView: View
                 })
                 {
                     Image(systemName: "line.3.horizontal.decrease.circle")
-                        .foregroundColor(.white)
                 }
-                .buttonStyle(.glassProminent)
+                .help("Filter colors")
+                #if os(macOS)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                #else
+                .buttonStyle(.bordered)
+                #endif
                 .padding(.trailing, 10)
                 
                 Button(action:
@@ -174,9 +199,14 @@ struct ContentView: View
                 })
                 {
                     Image(systemName: "square.and.arrow.down")
-                        .foregroundColor(.white)
                 }
-                .buttonStyle(.glassProminent)
+                .help("Import colors from a file")
+                #if os(macOS)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                #else
+                .buttonStyle(.bordered)
+                #endif
                 
                 Button(action:
                         {
@@ -184,49 +214,85 @@ struct ContentView: View
                 })
                 {
                     Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(.white)
                 }
-                .buttonStyle(.glassProminent)
+                .help("Export colors to a file")
+                #if os(macOS)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                #else
+                .buttonStyle(.bordered)
+                #endif
                 Spacer()
             }
-            .padding(.leading, 10)
-            .padding(.trailing, 10)
-            .padding(.top, 2)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            #if os(macOS)
+            .background(Color(nsColor: .controlBackgroundColor))
+            #else
+            .background(Color(uiColor: .systemBackground))
+            #endif
+            
+            Divider()
         }
         ScrollView
         {
-            LazyVGrid(columns: PaletteColumns, spacing: 1.0)
+            VStack(spacing: 0)
             {
-                SwatchView(SwatchColor: Color.orange,
-                           SwatchColorName: "Dark Orange",
-                           SwatchWidth: SwatchSize)
-                .padding(4)
-                SwatchView(SwatchColor: Color.red,
-                           SwatchColorName: "Ugly Red",
-                           SwatchWidth: SwatchSize)
-                .padding(4)
-                SwatchView(SwatchColor: Color.accentColor,
-                           SwatchColorName: "Accent",
-                           SwatchWidth: SwatchSize)
-                .padding(4)
-                SwatchView(SwatchColor: Color.pink,
-                           SwatchColorName: "Really Dark Pink",
-                           SwatchWidth: SwatchSize)
-                .padding(4)
-                SwatchView(SwatchColor: TestColor.GetColor(.SystemYellow),
-                           SwatchColorName: TestColor.GetColorName(.SystemYellow),
-                           SwatchWidth: SwatchSize)
-                .padding(4)
-                SwatchView(SwatchColor: TestColor.GetColor(.JapaneseFlagRed),
-                           SwatchColorName: TestColor.GetColorName(.JapaneseFlagRed),
-                           SwatchWidth: SwatchSize)
-                .padding(4)
-                SwatchView(SwatchColor: TestColor.GetColor(.ReallyLongColorName),
-                           SwatchColorName: TestColor.GetColorName(.ReallyLongColorName),
-                           SwatchWidth: SwatchSize)
-                .padding(4)
+                LazyVGrid(columns: PaletteColumns, spacing: 1.0)
+                {
+                    SwatchView(SelectedID: $SelectedSwatch,
+                                SwatchColor: Color.orange,
+                               SwatchColorName: "Dark Orange",
+                               SwatchWidth: SwatchSize)
+                    .padding(4)
+                    SwatchView(SelectedID: $SelectedSwatch,
+                               SwatchColor: Color.red,
+                               SwatchColorName: "Ugly Red",
+                               SwatchWidth: SwatchSize)
+                    .padding(4)
+                    SwatchView(SelectedID: $SelectedSwatch,
+                               SwatchColor: Color.accentColor,
+                               SwatchColorName: "Accent",
+                               SwatchWidth: SwatchSize)
+                    .padding(4)
+                    SwatchView(SelectedID: $SelectedSwatch,
+                               SwatchColor: Color.pink,
+                               SwatchColorName: "Really Dark Pink",
+                               SwatchWidth: SwatchSize)
+                    .padding(4)
+                    SwatchView(SelectedID: $SelectedSwatch,
+                               SwatchColor: TestColor.GetColor(.SystemYellow),
+                               SwatchColorName: TestColor.GetColorName(.SystemYellow),
+                               SwatchWidth: SwatchSize)
+                    .padding(4)
+                    SwatchView(SelectedID: $SelectedSwatch,
+                               SwatchColor: TestColor.GetColor(.JapaneseFlagRed),
+                               SwatchColorName: TestColor.GetColorName(.JapaneseFlagRed),
+                               SwatchWidth: SwatchSize)
+                    .padding(4)
+                    SwatchView(SelectedID: $SelectedSwatch,
+                               SwatchColor: TestColor.GetColor(.ReallyLongColorName),
+                               SwatchColorName: TestColor.GetColorName(.ReallyLongColorName),
+                               SwatchWidth: SwatchSize)
+                    .padding(4)
+                }
+                .padding(.horizontal, 8)
+                
+                // Spacer that fills remaining space and captures taps below content
+                Color.clear
+                    .frame(minHeight: 100)
+                    .contentShape(Rectangle())
+                    .onTapGesture
+                    {
+                        SelectedSwatch = UUID.empty
+                    }
             }
-            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .contentShape(Rectangle())
+            .onTapGesture
+            {
+                SelectedSwatch = UUID.empty
+            }
         }
         .background(PaletteBackground)
     }
@@ -235,4 +301,12 @@ struct ContentView: View
 #Preview
 {
     ContentView()
+}
+
+extension UUID
+{
+    static var empty: UUID
+    {
+        return UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    }
 }
