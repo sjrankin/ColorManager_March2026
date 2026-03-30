@@ -14,6 +14,12 @@ import UIKit
 
 class ColorSearcher
 {
+    /// Returns the Euclidian distance between the two passed colors.
+    /// - Parameter from: The first color.
+    /// - Parameter to: The second color.
+    /// - Note: The order of colors is immaterial.
+    /// - Returns: The Euclidian distance between the two passed colors. Black is returned on error.
+    /// - Note: The `ColorRecord`'s `Hex` field is used as the source of colors.
     static func Distance(from: ColorRecord, to: ColorRecord) -> Double
     {
         guard let FromColor = from.Hex?.Channels,
