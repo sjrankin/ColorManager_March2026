@@ -21,4 +21,9 @@ struct HexRecord: Identifiable, Equatable, ColorRecordToString
     {
         return "\(Prefix)\(AsString())"
     }
+    
+    var Channels: (red: Int, green: Int, blue: Int)
+    {
+        Convert.FromHexToChannels(self.HexValue)
+    }
 }

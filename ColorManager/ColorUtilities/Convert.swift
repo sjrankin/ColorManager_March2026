@@ -62,6 +62,26 @@ class Convert
         return FromRGB(R, G, B)
     }
     
+    static func FromHexToChannels(_ Hex: String) -> (red: Int, green: Int, blue: Int)
+    {
+        if Hex.isEmpty
+        {
+            return (0, 0, 0)
+        }
+        if Hex.count != 8
+        {
+            return (0, 0, 0)
+        }
+        let HexNoPrefix = String(Hex.dropFirst(2))
+        guard let R = Int(HexNoPrefix.prefix(2), radix: 16),
+              let G = Int(HexNoPrefix.dropFirst(2).prefix(2), radix: 16),
+              let B = Int(HexNoPrefix.dropFirst(4).prefix(2), radix: 16) else
+        {
+            return (0, 0, 0)
+        }
+        return (R, G, B)
+    }
+    
     // MARK: - PlatformColor to Channels
     
     static func IntChannels(From color: PlatformColor) -> (red: Int, green: Int, blue: Int)
