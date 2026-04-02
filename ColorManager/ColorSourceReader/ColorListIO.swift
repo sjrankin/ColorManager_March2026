@@ -139,13 +139,26 @@ class ColorListIO
     /// - Throws: ColorListError if parsing fails
     static func parseXMLFile(url: URL) throws -> ImportedColorData
     {
-        guard let parser = XMLParser(contentsOf: url) else
+        // Try to read the file data with explicit UTF-8 encoding
+        guard let data = try? Data(contentsOf: url) else
         {
             throw ColorListError.fileAccessDenied
         }
         
+        // Log file encoding info
+        if let xmlString = String(data: data, encoding: .utf8) {
+            print("📄 XML file size: \(data.count) bytes, \(xmlString.count) characters")
+            print("📄 Contains non-ASCII: \(xmlString.contains(where: { !$0.isASCII }))")
+        } else {
+            print("⚠️ Warning: Could not read file as UTF-8")
+        }
+        
+        let parser = XMLParser(data: data)
         let delegate = ColorListXMLParser()
         parser.delegate = delegate
+        parser.shouldProcessNamespaces = false
+        parser.shouldReportNamespacePrefixes = false
+        parser.shouldResolveExternalEntities = false
         
         guard parser.parse() else
         {
@@ -219,6 +232,145 @@ class ColorListIO
         }
         
         return HexRecord(HexValue: hex.uppercased())
+    }
+    
+    // MARK: - Color Space Conversion Utilities
+    
+    /// Convert RGB to Hex
+    static func rgbToHex(r: Int, g: Int, b: Int) -> String?
+    {
+        guard (0...255).contains(r) && (0...255).contains(g) && (0...255).contains(b) else
+        {
+            return nil
+        }
+        return String(format: "%02X%02X%02X", r, g, b)
+    }
+    
+    /// Convert CMYK to RGB
+    static func cmykToRGB(c: Double, m: Double, y: Double, k: Double) -> (r: Int, g: Int, b: Int)?
+    {
+        guard (0...100).contains(c) && (0...100).contains(m) && 
+              (0...100).contains(y) && (0...100).contains(k) else
+        {
+            return nil
+        }
+        
+        // Convert percentages to 0-1 range
+        let cNorm = c / 100.0
+        let mNorm = m / 100.0
+        let yNorm = y / 100.0
+        let kNorm = k / 100.0
+        
+        // CMYK to RGB conversion
+        let r = Int((1.0 - cNorm) * (1.0 - kNorm) * 255.0)
+        let g = Int((1.0 - mNorm) * (1.0 - kNorm) * 255.0)
+        let b = Int((1.0 - yNorm) * (1.0 - kNorm) * 255.0)
+        
+        return (r, g, b)
+    }
+    
+    /// Convert HSL to RGB
+    static func hslToRGB(h: Double, s: Double, l: Double) -> (r: Int, g: Int, b: Int)?
+    {
+        guard (0...360).contains(h) && (0...100).contains(s) && (0...100).contains(l) else
+        {
+            return nil
+        }
+        
+        let hNorm = h / 360.0
+        let sNorm = s / 100.0
+        let lNorm = l / 100.0
+        
+        let c = (1.0 - abs(2.0 * lNorm - 1.0)) * sNorm
+        let x = c * (1.0 - abs((hNorm * 6.0).truncatingRemainder(dividingBy: 2.0) - 1.0))
+        let m = lNorm - c / 2.0
+        
+        var r = 0.0, g = 0.0, b = 0.0
+        
+        let hSextant = Int(hNorm * 6.0)
+        switch hSextant {
+        case 0: (r, g, b) = (c, x, 0)
+        case 1: (r, g, b) = (x, c, 0)
+        case 2: (r, g, b) = (0, c, x)
+        case 3: (r, g, b) = (0, x, c)
+        case 4: (r, g, b) = (x, 0, c)
+        default: (r, g, b) = (c, 0, x)
+        }
+        
+        return (Int((r + m) * 255), Int((g + m) * 255), Int((b + m) * 255))
+    }
+    
+    /// Convert HSB (HSV) to RGB
+    static func hsbToRGB(h: Double, s: Double, b: Double) -> (r: Int, g: Int, b: Int)?
+    {
+        guard (0...360).contains(h) && (0...100).contains(s) && (0...100).contains(b) else
+        {
+            return nil
+        }
+        
+        let hNorm = h / 360.0
+        let sNorm = s / 100.0
+        let bNorm = b / 100.0
+        
+        let c = bNorm * sNorm
+        let x = c * (1.0 - abs((hNorm * 6.0).truncatingRemainder(dividingBy: 2.0) - 1.0))
+        let m = bNorm - c
+        
+        var r = 0.0, g = 0.0, b = 0.0
+        
+        let hSextant = Int(hNorm * 6.0)
+        switch hSextant {
+        case 0: (r, g, b) = (c, x, 0)
+        case 1: (r, g, b) = (x, c, 0)
+        case 2: (r, g, b) = (0, c, x)
+        case 3: (r, g, b) = (0, x, c)
+        case 4: (r, g, b) = (x, 0, c)
+        default: (r, g, b) = (c, 0, x)
+        }
+        
+        return (Int((r + m) * 255), Int((g + m) * 255), Int((b + m) * 255))
+    }
+    
+    /// Convert LAB to RGB (approximate conversion)
+    static func labToRGB(l: Double, a: Double, b: Double) -> (r: Int, g: Int, b: Int)?
+    {
+        guard (0...100).contains(l) && (-128...127).contains(a) && (-128...127).contains(b) else
+        {
+            return nil
+        }
+        
+        // LAB to XYZ
+        var y = (l + 16.0) / 116.0
+        var x = a / 500.0 + y
+        var z = y - b / 200.0
+        
+        let delta = 6.0 / 29.0
+        
+        x = x > delta ? pow(x, 3) : 3 * delta * delta * (x - 4.0 / 29.0)
+        y = y > delta ? pow(y, 3) : 3 * delta * delta * (y - 4.0 / 29.0)
+        z = z > delta ? pow(z, 3) : 3 * delta * delta * (z - 4.0 / 29.0)
+        
+        // D65 illuminant
+        x *= 0.95047
+        y *= 1.00000
+        z *= 1.08883
+        
+        // XYZ to RGB (sRGB)
+        var r = x *  3.2406 + y * -1.5372 + z * -0.4986
+        var g = x * -0.9689 + y *  1.8758 + z *  0.0415
+        var bVal = x *  0.0557 + y * -0.2040 + z *  1.0570
+        
+        // Gamma correction
+        r = r > 0.0031308 ? 1.055 * pow(r, 1.0/2.4) - 0.055 : 12.92 * r
+        g = g > 0.0031308 ? 1.055 * pow(g, 1.0/2.4) - 0.055 : 12.92 * g
+        bVal = bVal > 0.0031308 ? 1.055 * pow(bVal, 1.0/2.4) - 0.055 : 12.92 * bVal
+        
+        // Clamp to valid range
+        r = max(0, min(1, r))
+        g = max(0, min(1, g))
+        bVal = max(0, min(1, bVal))
+        
+        return (Int(r * 255), Int(g * 255), Int(bVal * 255))
     }
     
     /// Create an RGBRecord from integer values
@@ -470,27 +622,68 @@ class ColorRecordBuilder
     
     private var firstDefinedColorSpace: String?
     
+    // Known attribute names (for detecting unrecognized attributes)
+    private static let knownAttributes: Set<String> = [
+        "name", "Name",
+        "aname", "AName",
+        "names", "Names", "anames", "ANames",
+        "canonical", "Canonical",
+        "tags", "Tags",
+        "language", "Language",
+        "hex", "Hex",
+        "RGB", "rgb", "r", "g", "b",
+        "CMYK", "cmyk", "c", "m", "y", "k",
+        "HSL", "hsl", "h", "s", "l",
+        "HSB", "hsb", "HSV", "hsv",
+        "LAB", "lab", "L", "a",
+        "variant",
+        "replaces"
+    ]
+    
     init(attributes: [String: String])
     {
         self.name = attributes["name"] ?? attributes["Name"] ?? "Unnamed"
         self.alternativeName = attributes["aname"] ?? attributes["AName"]
-        self.canonical = attributes["canonical"]
-        self.language = attributes["language"]
+        self.canonical = attributes["canonical"] ?? attributes["Canonical"]
+        self.language = attributes["language"] ?? attributes["Language"]
         
-        // Parse alternative names (comma-separated)
-        if let names = attributes["names"] ?? attributes["Names"]
+        // Log if name contains non-ASCII characters
+        if name.contains(where: { !$0.isASCII }) {
+            print("🌏 Parsing color with non-ASCII name: '\(name)'")
+        }
+        
+        // Parse alternative names (comma-separated) - treat both "Names" and "ANames" as alternative names
+        if let names = attributes["names"] ?? attributes["Names"] ?? attributes["anames"] ?? attributes["ANames"]
         {
             self.alternativeNames = names.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) }
         }
         
         // Parse tags (comma-separated)
-        if let tagsString = attributes["tags"]
+        if let tagsString = attributes["tags"] ?? attributes["Tags"]
         {
             self.tags = tagsString.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) }
         }
         
+        // Check for unrecognized attributes
+        logUnrecognizedAttributes(attributes)
+        
         // Parse color spaces in order to determine first defined
         parseColorSpaces(from: attributes)
+    }
+    
+    /// Log any unrecognized attributes to help identify parsing issues
+    private func logUnrecognizedAttributes(_ attributes: [String: String])
+    {
+        let unrecognized = attributes.keys.filter { !ColorRecordBuilder.knownAttributes.contains($0) }
+        
+        if !unrecognized.isEmpty
+        {
+            print("⚠️ Unrecognized attributes in color '\(name)': \(unrecognized.sorted().joined(separator: ", "))")
+            for attr in unrecognized.sorted()
+            {
+                print("   - \(attr) = \"\(attributes[attr] ?? "")\"")
+            }
+        }
     }
     
     private func parseColorSpaces(from attributes: [String: String])
@@ -505,8 +698,30 @@ class ColorRecordBuilder
             }
         }
         
-        // Check RGB
-        if let rStr = attributes["r"], let gStr = attributes["g"], let bStr = attributes["b"],
+        // Check RGB - handle both comma-separated and individual attributes
+        var rgbParsed = false
+        
+        // Try comma-separated format first: RGB="255,217,15"
+        if let rgbString = attributes["RGB"] ?? attributes["rgb"]
+        {
+            let components = rgbString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if components.count == 3,
+               let r = Int(components[0]),
+               let g = Int(components[1]),
+               let b = Int(components[2])
+            {
+                rgbRecord = ColorListIO.createRGBRecord(r: r, g: g, b: b)
+                if rgbRecord != nil && firstDefinedColorSpace == nil
+                {
+                    firstDefinedColorSpace = "RGB"
+                }
+                rgbParsed = true
+            }
+        }
+        
+        // Try individual attributes: r="255" g="217" b="15"
+        if !rgbParsed,
+           let rStr = attributes["r"], let gStr = attributes["g"], let bStr = attributes["b"],
            let r = Int(rStr), let g = Int(gStr), let b = Int(bStr)
         {
             rgbRecord = ColorListIO.createRGBRecord(r: r, g: g, b: b)
@@ -516,8 +731,66 @@ class ColorRecordBuilder
             }
         }
         
-        // Check HSL
-        if let hStr = attributes["h"], let sStr = attributes["s"], let lStr = attributes["l"],
+        // Check CMYK - handle both comma-separated and individual attributes
+        var cmykParsed = false
+        
+        // Try comma-separated format: CMYK="0,100,100,0"
+        if let cmykString = attributes["CMYK"] ?? attributes["cmyk"]
+        {
+            let components = cmykString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if components.count == 4,
+               let c = Double(components[0]),
+               let m = Double(components[1]),
+               let y = Double(components[2]),
+               let k = Double(components[3])
+            {
+                cmykRecord = ColorListIO.createCMYKRecord(c: c, m: m, y: y, k: k)
+                if cmykRecord != nil && firstDefinedColorSpace == nil
+                {
+                    firstDefinedColorSpace = "CMYK"
+                }
+                cmykParsed = true
+            }
+        }
+        
+        // Try individual attributes
+        if !cmykParsed,
+           let cStr = attributes["c"], let mStr = attributes["m"],
+           let yStr = attributes["y"], let kStr = attributes["k"],
+           let c = Double(cStr), let m = Double(mStr),
+           let y = Double(yStr), let k = Double(kStr)
+        {
+            cmykRecord = ColorListIO.createCMYKRecord(c: c, m: m, y: y, k: k)
+            if cmykRecord != nil && firstDefinedColorSpace == nil
+            {
+                firstDefinedColorSpace = "CMYK"
+            }
+        }
+        
+        // Check HSL - handle both comma-separated and individual attributes
+        var hslParsed = false
+        
+        // Try comma-separated format: HSL="120,100,50"
+        if let hslString = attributes["HSL"] ?? attributes["hsl"]
+        {
+            let components = hslString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if components.count == 3,
+               let h = Double(components[0]),
+               let s = Double(components[1]),
+               let l = Double(components[2])
+            {
+                hslRecord = ColorListIO.createHSLRecord(h: h, s: s, l: l)
+                if hslRecord != nil && firstDefinedColorSpace == nil
+                {
+                    firstDefinedColorSpace = "HSL"
+                }
+                hslParsed = true
+            }
+        }
+        
+        // Try individual attributes
+        if !hslParsed,
+           let hStr = attributes["h"], let sStr = attributes["s"], let lStr = attributes["l"],
            let h = Double(hStr), let s = Double(sStr), let l = Double(lStr)
         {
             hslRecord = ColorListIO.createHSLRecord(h: h, s: s, l: l)
@@ -528,7 +801,29 @@ class ColorRecordBuilder
         }
         
         // Check HSB (only if HSL wasn't defined - both use h,s)
+        var hsbParsed = false
+        
+        // Try comma-separated format: HSB="120,100,50"
         if hslRecord == nil,
+           let hsbString = attributes["HSB"] ?? attributes["hsb"] ?? attributes["HSV"] ?? attributes["hsv"]
+        {
+            let components = hsbString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if components.count == 3,
+               let h = Double(components[0]),
+               let s = Double(components[1]),
+               let b = Double(components[2])
+            {
+                hsbRecord = ColorListIO.createHSBRecord(h: h, s: s, b: b)
+                if hsbRecord != nil && firstDefinedColorSpace == nil
+                {
+                    firstDefinedColorSpace = "HSB"
+                }
+                hsbParsed = true
+            }
+        }
+        
+        // Try individual attributes (only if HSL wasn't defined)
+        if !hsbParsed && hslRecord == nil,
            let hStr = attributes["h"], let sStr = attributes["s"], let bStr = attributes["b"],
            let h = Double(hStr), let s = Double(sStr), let b = Double(bStr)
         {
@@ -539,21 +834,30 @@ class ColorRecordBuilder
             }
         }
         
-        // Check CMYK
-        if let cStr = attributes["c"], let mStr = attributes["m"], 
-           let yStr = attributes["y"], let kStr = attributes["k"],
-           let c = Double(cStr), let m = Double(mStr), 
-           let y = Double(yStr), let k = Double(kStr)
+        // Check LAB - handle both comma-separated and individual attributes
+        var labParsed = false
+        
+        // Try comma-separated format: LAB="53,-80,67"
+        if let labString = attributes["LAB"] ?? attributes["lab"]
         {
-            cmykRecord = ColorListIO.createCMYKRecord(c: c, m: m, y: y, k: k)
-            if cmykRecord != nil && firstDefinedColorSpace == nil
+            let components = labString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if components.count == 3,
+               let l = Double(components[0]),
+               let a = Double(components[1]),
+               let b = Double(components[2])
             {
-                firstDefinedColorSpace = "CMYK"
+                labRecord = ColorListIO.createLABRecord(l: l, a: a, b: b)
+                if labRecord != nil && firstDefinedColorSpace == nil
+                {
+                    firstDefinedColorSpace = "LAB"
+                }
+                labParsed = true
             }
         }
         
-        // Check LAB
-        if let lStr = attributes["L"], let aStr = attributes["a"], let bStr = attributes["b"],
+        // Try individual attributes
+        if !labParsed,
+           let lStr = attributes["L"], let aStr = attributes["a"], let bStr = attributes["b"],
            let l = Double(lStr), let a = Double(aStr), let b = Double(bStr)
         {
             labRecord = ColorListIO.createLABRecord(l: l, a: a, b: b)
@@ -569,6 +873,48 @@ class ColorRecordBuilder
         // If no canonical specified, use first defined colorspace
         let finalCanonical = canonical ?? firstDefinedColorSpace
         
+        // Auto-generate hex if not present, using priority order: RGB, CMYK, HSL, HSB, LAB
+        var finalHexRecord = hexRecord
+        
+        if finalHexRecord == nil
+        {
+            var rgbValues: (r: Int, g: Int, b: Int)?
+            
+            // Try RGB first
+            if let rgb = rgbRecord
+            {
+                rgbValues = (rgb.r, rgb.g, rgb.b)
+            }
+            // Try CMYK
+            else if let cmyk = cmykRecord
+            {
+                rgbValues = ColorListIO.cmykToRGB(c: cmyk.c, m: cmyk.m, y: cmyk.y, k: cmyk.k)
+            }
+            // Try HSL
+            else if let hsl = hslRecord
+            {
+                rgbValues = ColorListIO.hslToRGB(h: hsl.h, s: hsl.s, l: hsl.l)
+            }
+            // Try HSB
+            else if let hsb = hsbRecord
+            {
+                rgbValues = ColorListIO.hsbToRGB(h: hsb.h, s: hsb.s, b: hsb.b)
+            }
+            // Try LAB
+            else if let lab = labRecord
+            {
+                rgbValues = ColorListIO.labToRGB(l: lab.l, a: lab.a, b: lab.b)
+            }
+            
+            // Convert RGB to hex if we got values
+            if let rgb = rgbValues,
+               let hexString = ColorListIO.rgbToHex(r: rgb.r, g: rgb.g, b: rgb.b)
+            {
+                finalHexRecord = HexRecord(HexValue: hexString)
+                print("📝 Auto-generated hex '\(hexString)' for color '\(name)' from available color space")
+            }
+        }
+        
         return ColorRecord(
             Name: name,
             AlternativeNames: alternativeNames,
@@ -576,7 +922,7 @@ class ColorRecordBuilder
             Canonical: finalCanonical,
             Tags: tags,
             Language: language,
-            Hex: hexRecord,
+            Hex: finalHexRecord,
             RGB: rgbRecord,
             HSL: hslRecord,
             HSB: hsbRecord,

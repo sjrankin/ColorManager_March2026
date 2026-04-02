@@ -14,6 +14,7 @@ struct SwatchView: View
     var InstanceID = UUID()
     @State var SwatchColor: Color = .red
     @State var SwatchColorName: String = "Test Name That Is Too Long"
+    @State var SwatchColorValue: String = "0x000000"
     @State var SwatchWidth: CGFloat = 96
     @State var SwatchHeaderHeight: CGFloat = 48
     @State var ShowShadow: Bool = true
@@ -32,6 +33,7 @@ struct SwatchView: View
         VStack
         {
             SwatchHeader(ColorName: SwatchColorName,
+                         ColorValue: SwatchColorValue,
                          SwatchWidth: SwatchWidth,
                          HeaderHeight: SwatchHeaderHeight,
                          BackgroundColor: $SwatchHeaderBackground)

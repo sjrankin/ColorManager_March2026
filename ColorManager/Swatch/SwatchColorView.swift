@@ -20,6 +20,7 @@ struct SwatchColorView: View
             {
                 Rectangle()
                     .fill(TheColor)
+                    .border(.black)
             }
         }
         .frame(width: SideLength, height: SideLength)

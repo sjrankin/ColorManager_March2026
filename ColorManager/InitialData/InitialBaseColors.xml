@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="Utf-8" ?>
+<Colors DefaultFont="Segoe UI" EnableDebug="False" AutoCapitalize="True">
+<VersionBlock Version="3">
+<FileVersion>
+<Date>17-Aug-2023</Date>
+<Version>2.0</Version>
+</FileVersion>
+<DataVersion>
+<Date>1-Apr-2026</Date>
+<Version>1.4</Version>
+<ID>{ad17f420-33a1-4a7e-9329-481e86c74cb1}</ID>
+</DataVersion>
+<LegalBlock>
+<Copyright>Copyright (c) 2008 - 2026, Stuart Rankin</Copyright>
+<Rights>All rights reserved except for those trademarks specifically owned by others.</Rights>
+</LegalBlock>
+<SaveData>
+<Written Date="1-Apr-2026"/>
+</SaveData>
+</VersionBlock>
+<ColorGroup Name="Base Initial Colors">
+<Color Name="Black" Hex="000000"/>
+<Color Name="White" Hex="ffffff"/>
+<Color Name="Red" Hex="ff0000"/>
+<Color Name="Green" Hex="00ff00"/>
+<Color Name="Blue" Hex="0000ff"/>
+<Color Name="Yellow" Hex="ffff00"/>
+<Color Name="Purple" Hex="ff00ff"/>
+<Color Name="Cyan" Hex="00ffff"/>
+</ColorGroup>
+</Colors>
