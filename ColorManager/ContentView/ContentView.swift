@@ -22,6 +22,8 @@ struct ContentView: View
     @State var SelectedSwatch: UUID = UUID.empty
     @State var selectedGroupPath: [String] = [] // Track selected group hierarchy
     @State var expandedGroups: Set<String> = [] // Track expanded groups
+    @State var ShowColorInfoPanel: Bool = false
+    @State var SelectedColorRecord: ColorRecord? = nil
     
     #if os(macOS)
     @State var PaletteBackground: Color = Color(nsColor: NSColor.controlBackgroundColor)

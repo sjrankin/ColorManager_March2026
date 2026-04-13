@@ -47,122 +47,52 @@ extension ContentView
         return allColors
     }
     
-    /// Get colors for the currently selected path
+    /// Get colors for the currently selected path.
+    /// Navigates the group/collection hierarchy using the path components, handling
+    /// group→group, group→collection, collection→group, and collection→collection transitions.
     func getColorsForSelectedPath() -> [ColorRecord]
     {
-        guard let groups = colorList.colorGroups else {
-            print("  ⚠️ getColorsForSelectedPath: No groups available")
-            return []
-        }
-        
-        print("  🔍 Searching for path: '\(selectedGroupPath.joined(separator: " > "))'")
-        
-        // Navigate through the path to find the selected group/collection
-        var currentGroups = groups
-        var targetGroup: ColorGroup?
-        var targetCollection: ColorCollection?
-        
-        for (index, pathComponent) in selectedGroupPath.enumerated()
+        guard let groups = colorList.colorGroups, !selectedGroupPath.isEmpty else { return [] }
+
+        guard let rootGroup = groups.first(where: { $0.Name == selectedGroupPath[0] }) else { return [] }
+
+        return navigateGroup(rootGroup, remainingPath: Array(selectedGroupPath.dropFirst()))
+    }
+
+    private func navigateGroup(_ group: ColorGroup, remainingPath: [String]) -> [ColorRecord]
+    {
+        if remainingPath.isEmpty { return getColorsFromGroup(group) }
+
+        let next = remainingPath[0]
+        let rest = Array(remainingPath.dropFirst())
+
+        if let nestedGroup = group.Groups?.first(where: { $0.Name == next })
         {
-            print("    Step \(index + 1): Looking for '\(pathComponent)' in \(currentGroups.count) groups")
-            
-            // Debug: Print available group names
-            let groupNames = currentGroups.map { $0.Name }
-            print("    Available groups: \(groupNames.joined(separator: ", "))")
-            
-            // Try to find in groups first
-            if let group = currentGroups.first(where: { $0.Name == pathComponent })
-            {
-                targetGroup = group
-                print("    ✓ Found group '\(pathComponent)'")
-                
-                // Check if this is the last component
-                if index == selectedGroupPath.count - 1
-                {
-                    // This is the target
-                    print("    ✓ This is the target group")
-                    break
-                }
-                
-                // Continue navigating - check nested groups
-                if let nestedGroups = group.Groups, !nestedGroups.isEmpty
-                {
-                    currentGroups = nestedGroups
-                    print("    → Moving to \(nestedGroups.count) nested groups")
-                }
-                else if let collections = group.Collections, !collections.isEmpty
-                {
-                    print("    → Group has \(collections.count) collections")
-                    // Must be in collections then
-                    if index + 1 < selectedGroupPath.count
-                    {
-                        let nextComponent = selectedGroupPath[index + 1]
-                        print("    🔍 Searching for collection '\(nextComponent)'")
-                        targetCollection = findCollectionInCollections(collections, name: nextComponent, remainingPath: Array(selectedGroupPath[(index + 2)...]))
-                        break
-                    }
-                }
-                else
-                {
-                    print("    ⚠️ Group has no nested groups or collections")
-                    // This is a leaf group, stop here
-                    break
-                }
-            }
-            else
-            {
-                print("    ❌ Path component '\(pathComponent)' not found!")
-                print("    UTF-8 bytes of search term: \(Array(pathComponent.utf8))")
-                for groupName in groupNames
-                {
-                    print("    Comparing with: '\(groupName)' - UTF-8: \(Array(groupName.utf8)) - Match: \(groupName == pathComponent)")
-                }
-                // Path not found
-                return []
-            }
+            return navigateGroup(nestedGroup, remainingPath: rest)
         }
-        
-        // Return colors from target
-        if let collection = targetCollection
+        if let collection = group.Collections?.first(where: { $0.Name == next })
         {
-            let colors = getColorsFromCollection(collection)
-            print("  ✓ Extracted \(colors.count) colors from collection '\(collection.Name)'")
-            return colors
+            return navigateCollection(collection, remainingPath: rest)
         }
-        else if let group = targetGroup
-        {
-            let colors = getColorsFromGroup(group)
-            print("  ✓ Extracted \(colors.count) colors from group '\(group.Name)'")
-            return colors
-        }
-        
-        print("  ❌ No target found!")
         return []
     }
-    
-    /// Helper to find a collection in nested collections
-    func findCollectionInCollections(_ collections: [ColorCollection], name: String, remainingPath: [String]) -> ColorCollection?
+
+    private func navigateCollection(_ collection: ColorCollection, remainingPath: [String]) -> [ColorRecord]
     {
-        guard let collection = collections.first(where: { $0.Name == name }) else
+        if remainingPath.isEmpty { return getColorsFromCollection(collection) }
+
+        let next = remainingPath[0]
+        let rest = Array(remainingPath.dropFirst())
+
+        if let nestedGroup = collection.Groups?.first(where: { $0.Name == next })
         {
-            return nil
+            return navigateGroup(nestedGroup, remainingPath: rest)
         }
-        
-        // If no more path, return this collection
-        if remainingPath.isEmpty
+        if let nestedCollection = collection.Collections?.first(where: { $0.Name == next })
         {
-            return collection
+            return navigateCollection(nestedCollection, remainingPath: rest)
         }
-        
-        // Navigate deeper
-        if let nestedCollections = collection.Collections
-        {
-            let nextName = remainingPath[0]
-            let nextRemainingPath = Array(remainingPath.dropFirst())
-            return findCollectionInCollections(nestedCollections, name: nextName, remainingPath: nextRemainingPath)
-        }
-        
-        return nil
+        return []
     }
     
     /// Expand or collapse all groups
@@ -261,14 +191,20 @@ extension ContentView
     func getColorsFromCollection(_ collection: ColorCollection) -> [ColorRecord]
     {
         var colors: [ColorRecord] = []
-        
-        // Add direct colors
+
         if let collectionColors = collection.Colors
         {
             colors.append(contentsOf: collectionColors)
         }
-        
-        // Add colors from nested collections
+
+        if let groups = collection.Groups
+        {
+            for group in groups
+            {
+                colors.append(contentsOf: getColorsFromGroup(group))
+            }
+        }
+
         if let nestedCollections = collection.Collections
         {
             for nestedCollection in nestedCollections
@@ -276,7 +212,80 @@ extension ContentView
                 colors.append(contentsOf: getColorsFromCollection(nestedCollection))
             }
         }
-        
+
         return colors
+    }
+
+    /// Returns the path (group/collection names) to the container that holds the given color.
+    /// The last element is the immediate container; the one before it is its parent.
+    func pathForColor(_ record: ColorRecord) -> [String]
+    {
+        guard let groups = colorList.colorGroups else { return [] }
+        for group in groups
+        {
+            if let path = searchGroup(group, target: record.id, currentPath: [group.Name])
+            {
+                return path
+            }
+        }
+        return []
+    }
+
+    private func searchGroup(_ group: ColorGroup, target: UUID, currentPath: [String]) -> [String]?
+    {
+        if group.Colors?.contains(where: { $0.id == target }) == true
+        {
+            return currentPath
+        }
+        if let nestedGroups = group.Groups
+        {
+            for nested in nestedGroups
+            {
+                if let found = searchGroup(nested, target: target, currentPath: currentPath + [nested.Name])
+                {
+                    return found
+                }
+            }
+        }
+        if let collections = group.Collections
+        {
+            for collection in collections
+            {
+                if let found = searchCollection(collection, target: target, currentPath: currentPath + [collection.Name])
+                {
+                    return found
+                }
+            }
+        }
+        return nil
+    }
+
+    private func searchCollection(_ collection: ColorCollection, target: UUID, currentPath: [String]) -> [String]?
+    {
+        if collection.Colors?.contains(where: { $0.id == target }) == true
+        {
+            return currentPath
+        }
+        if let groups = collection.Groups
+        {
+            for group in groups
+            {
+                if let found = searchGroup(group, target: target, currentPath: currentPath + [group.Name])
+                {
+                    return found
+                }
+            }
+        }
+        if let nested = collection.Collections
+        {
+            for sub in nested
+            {
+                if let found = searchCollection(sub, target: target, currentPath: currentPath + [sub.Name])
+                {
+                    return found
+                }
+            }
+        }
+        return nil
     }
 }

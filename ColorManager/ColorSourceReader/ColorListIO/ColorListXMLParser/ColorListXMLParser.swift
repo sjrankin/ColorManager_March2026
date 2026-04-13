@@ -86,14 +86,18 @@ class ColorListXMLParser: NSObject, XMLParserDelegate
                 if let builder = currentColorBuilder,
                    let colorRecord = builder.build()
                 {
-                    // Add to appropriate container
-                    if !collectionStack.isEmpty
-                    {
-                        collectionStack[collectionStack.count - 1].colors.append(colorRecord)
-                    }
-                    else if !colorGroupStack.isEmpty
+                    // Use the immediate parent element (top of elementStack after this
+                    // element was popped) to decide where the color belongs, so that
+                    // a Color inside a ColorGroup inside a ColorCollection is correctly
+                    // added to the group, not the enclosing collection.
+                    let parent = elementStack.last?.lowercased()
+                    if parent == "colorgroup", !colorGroupStack.isEmpty
                     {
                         colorGroupStack[colorGroupStack.count - 1].colors.append(colorRecord)
+                    }
+                    else if parent == "colorcollection", !collectionStack.isEmpty
+                    {
+                        collectionStack[collectionStack.count - 1].colors.append(colorRecord)
                     }
                     else
                     {
@@ -125,8 +129,17 @@ class ColorListXMLParser: NSObject, XMLParserDelegate
                 {
                     let builder = colorGroupStack.removeLast()
                     let group = builder.build()
-                    
-                    if !colorGroupStack.isEmpty
+
+                    // After popping, check what the parent element is.
+                    // elementStack.last is the parent since we already removed the current element above.
+                    let parentIsCollection = elementStack.last?.lowercased() == "colorcollection"
+
+                    if parentIsCollection && !collectionStack.isEmpty
+                    {
+                        // Group is nested inside a ColorCollection
+                        collectionStack[collectionStack.count - 1].groups.append(group)
+                    }
+                    else if !colorGroupStack.isEmpty
                     {
                         // Add to parent group
                         colorGroupStack[colorGroupStack.count - 1].groups.append(group)

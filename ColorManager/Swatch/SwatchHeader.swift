@@ -9,11 +9,11 @@ import SwiftUI
 
 struct SwatchHeader: View
 {
-    @State var ColorName: String = "Name of Color"
-    @State var ColorValue: String = "0x000000"
-    @State var ShowColorValue: Bool = true
-    @State var SwatchWidth: CGFloat = 96
-    @State var HeaderHeight: CGFloat = 38
+    var ColorName: String = "Name of Color"
+    var ColorValue: String = "0x000000"
+    var ShowColorValue: Bool = true
+    var SwatchWidth: CGFloat = 96
+    var HeaderHeight: CGFloat = 38
     @Binding var BackgroundColor: Color
     
     var body: some View

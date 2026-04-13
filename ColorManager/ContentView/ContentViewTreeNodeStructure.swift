@@ -248,25 +248,40 @@ struct CollectionTreeNode: View
                 selectedGroupPath = path
             }
             
-            // Nested collections (if expanded)
-            if isExpanded, let nestedCollections = collection.Collections
+            // Nested groups and collections (if expanded)
+            if isExpanded
             {
-                ForEach(nestedCollections, id: \.Name) { nestedCollection in
-                    CollectionTreeNode(
-                        collection: nestedCollection,
-                        path: path + [nestedCollection.Name],
-                        level: level + 1,
-                        expandedGroups: $expandedGroups,
-                        selectedGroupPath: $selectedGroupPath
-                    )
+                if let nestedGroups = collection.Groups
+                {
+                    ForEach(nestedGroups, id: \.Name) { nestedGroup in
+                        GroupTreeNode(
+                            group: nestedGroup,
+                            path: path + [nestedGroup.Name],
+                            level: level + 1,
+                            expandedGroups: $expandedGroups,
+                            selectedGroupPath: $selectedGroupPath
+                        )
+                    }
+                }
+                if let nestedCollections = collection.Collections
+                {
+                    ForEach(nestedCollections, id: \.Name) { nestedCollection in
+                        CollectionTreeNode(
+                            collection: nestedCollection,
+                            path: path + [nestedCollection.Name],
+                            level: level + 1,
+                            expandedGroups: $expandedGroups,
+                            selectedGroupPath: $selectedGroupPath
+                        )
+                    }
                 }
             }
         }
     }
-    
-     var hasNestedCollections: Bool
+
+    var hasNestedCollections: Bool
     {
-        collection.Collections?.isEmpty == false
+        (collection.Groups?.isEmpty == false) || (collection.Collections?.isEmpty == false)
     }
     
      func toggleExpansion()

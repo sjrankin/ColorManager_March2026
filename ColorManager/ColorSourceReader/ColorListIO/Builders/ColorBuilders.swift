@@ -416,8 +416,9 @@ class ColorCollectionBuilder
     var font: String?
     
     var colors: [ColorRecord] = []
+    var groups: [ColorGroup] = []
     var collections: [ColorCollection] = []
-    
+
     init(attributes: [String: String])
     {
         self.name = attributes["name"] ?? attributes["Name"] ?? "Unnamed Collection"
@@ -426,7 +427,7 @@ class ColorCollectionBuilder
         self.className = attributes["className"] ?? attributes["ClassName"]
         self.font = attributes["font"]
     }
-    
+
     func build() -> ColorCollection
     {
         return ColorCollection(
@@ -436,6 +437,7 @@ class ColorCollectionBuilder
             ClassName: className,
             Colors: colors.isEmpty ? nil : colors,
             Font: font,
+            Groups: groups.isEmpty ? nil : groups,
             Collections: collections.isEmpty ? nil : collections
         )
     }

@@ -24,6 +24,8 @@ struct ColorCollection: Identifiable, Equatable
     let Colors: [ColorRecord]?
     /// Optional font to use when displaying color names.
     let Font: String?
+    /// Optional nested groups. May be nil or empty.
+    let Groups: [ColorGroup]?
     /// Option sub-collections. May be nil or empty.
     let Collections: [ColorCollection]?
 }

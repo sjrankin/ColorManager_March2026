@@ -9,24 +9,25 @@ import SwiftUI
 
 struct SwatchView: View
 {
-    @State var ColorID: UUID?
+    var ColorID: UUID? = nil
     @Binding var SelectedID: UUID
-    var InstanceID = UUID()
-    @State var SwatchColor: Color = .red
-    @State var SwatchColorName: String = "Test Name That Is Too Long"
-    @State var SwatchColorValue: String = "0x000000"
-    @State var SwatchWidth: CGFloat = 96
-    @State var SwatchHeaderHeight: CGFloat = 48
-    @State var ShowShadow: Bool = true
-    @State var CanTap: Bool = true
+    @State private var InstanceID = UUID()
+    var SwatchColor: Color = .red
+    var SwatchColorName: String = "Test Name That Is Too Long"
+    var SwatchColorValue: String = "0x000000"
+    var SwatchWidth: CGFloat = 96
+    var SwatchHeaderHeight: CGFloat = 48
+    var ShowShadow: Bool = true
+    var CanTap: Bool = true
+    var onTap: (() -> Void)? = nil
     let CornerRadius: CGFloat = 2.0
-    @State var ShadowColor: Color = .black.opacity(0.4)
-    @State var BorderColor: Color = .black
-    @State var BorderThickness: CGFloat = 1.0
-    @State var SwatchHeaderBackground: Color = .gray.opacity(0.15)
-    @State var ShadowRadius: CGFloat = 2.0
-    @State var ShadowXOffset: CGFloat = 2.0
-    @State var ShadowYOffset: CGFloat = 2.0
+    @State private var ShadowColor: Color = .black.opacity(0.4)
+    @State private var BorderColor: Color = .black
+    @State private var BorderThickness: CGFloat = 1.0
+    @State private var SwatchHeaderBackground: Color = .gray.opacity(0.15)
+    @State private var ShadowRadius: CGFloat = 2.0
+    @State private var ShadowXOffset: CGFloat = 2.0
+    @State private var ShadowYOffset: CGFloat = 2.0
     
     var body: some View
     {
@@ -55,6 +56,7 @@ struct SwatchView: View
         .onTapGesture
         {
             SelectedID = InstanceID
+            onTap?()
         }
         .onChange(of: SelectedID)
         {

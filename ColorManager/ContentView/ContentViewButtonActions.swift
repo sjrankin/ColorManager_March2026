@@ -17,27 +17,27 @@ import UIKit
 
 extension ContentView
 {
-     func handleEdit()
+    func handleEdit()
     {
         // TODO: Implement edit functionality
     }
     
-     func handleCamera()
+    func handleCamera()
     {
         ShowCameraMatchView.toggle()
     }
     
-     func handleSearch()
+    func handleSearch()
     {
         ShowCameraMatchView.toggle()
     }
     
-     func handleFilter()
+    func handleFilter()
     {
         // TODO: Implement filter functionality
     }
     
-     func handleImport()
+    func handleImport()
     {
         NSLog("🔵 Import button tapped")
         print("🔵 Import button tapped")
@@ -52,12 +52,17 @@ extension ContentView
         }
     }
     
-     func handleExport()
+    func handleExport()
     {
         // TODO: Implement export functionality
     }
     
-     func clearSelection()
+    func ShowColorInfo()
+    {
+        ShowColorInfoPanel.toggle()
+    }
+    
+    func clearSelection()
     {
         SelectedSwatch = UUID.empty
     }

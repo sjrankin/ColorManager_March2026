@@ -99,11 +99,12 @@ extension ContentView
     
     var infoButton: some View
     {
-        Button(action: { handleExport() })
+        Button(action: { ShowColorInfo() })
         {
-            Image(systemName: "info.circle")
+            Image(systemName: ShowColorInfoPanel ? "info.circle.fill" : "info.circle")
         }
         .help("Show color information")
         .toolbarButtonStyle(prominent: false)
+        .tint(ShowColorInfoPanel ? .accentColor : nil)
     }
 }
