@@ -288,4 +288,53 @@ extension ContentView
         }
         return nil
     }
+
+    // MARK: - Display Name Helpers
+
+    /// Returns the name to display as primary for a color record.
+    /// If `Name` is ASCII but `AlternativeNames` contains a non-ASCII name,
+    /// the first non-ASCII alternative is promoted to primary.
+    func displayName(for record: ColorRecord) -> String
+    {
+        // Name already contains non-ASCII — use as-is
+        guard record.Name.allSatisfy({ $0.isASCII }) else { return record.Name }
+        // Promote first non-ASCII entry from AlternativeNames
+        if let promoted = record.AlternativeNames?.first(where: { !$0.allSatisfy({ $0.isASCII }) })
+        {
+            return promoted
+        }
+        // Promote AlternativeName (singular) if non-ASCII
+        if let altName = record.AlternativeName, !altName.allSatisfy({ $0.isASCII })
+        {
+            return altName
+        }
+        return record.Name
+    }
+
+    /// Returns the list of "Also Known As" names for display.
+    /// When `displayName` promoted a non-ASCII alternative to primary,
+    /// the original ASCII `Name` replaces it in the returned list.
+    func displayAlternativeNames(for record: ColorRecord) -> [String]
+    {
+        let primary = displayName(for: record)
+        guard primary != record.Name else
+        {
+            // No promotion happened — return alts as stored
+            var alts: [String] = []
+            if let names = record.AlternativeNames { alts.append(contentsOf: names) }
+            else if let name = record.AlternativeName { alts.append(name) }
+            return alts
+        }
+        // Primary was promoted from alts: put original Name back in the alt list
+        var alts: [String] = [record.Name]
+        if let names = record.AlternativeNames
+        {
+            alts.append(contentsOf: names.filter { $0 != primary })
+        }
+        else if let name = record.AlternativeName, name != primary
+        {
+            alts.append(name)
+        }
+        return alts
+    }
 }

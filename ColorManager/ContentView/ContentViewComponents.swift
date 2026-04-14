@@ -64,6 +64,12 @@ extension ContentView
                     .frame(minWidth: 200, idealWidth: 280, maxWidth: 500)
             }
         }
+        .onChange(of: selectedGroupPath)
+        {
+            _, _ in
+            SelectedSwatch = UUID.empty
+            SelectedColorRecord = nil
+        }
     }
     
     /// Left side navigation tree
@@ -198,7 +204,7 @@ extension ContentView
                     colorRecord in
                     SwatchView(SelectedID: $SelectedSwatch,
                                SwatchColor: colorFromRecord(colorRecord),
-                               SwatchColorName: colorRecord.Name,
+                               SwatchColorName: displayName(for: colorRecord),
                                SwatchColorValue: valueFromRecord(colorRecord),
                                SwatchWidth: SwatchSize,
                                onTap: { SelectedColorRecord = colorRecord })
@@ -283,42 +289,45 @@ extension ContentView
                             .padding(.top, path.count >= 1 ? 4 : 12)
 
                         // Name
+                        let hexForCopy = record.Hex.map { "0x\($0.AsString())" } ?? ""
+                        let dispName = displayName(for: record)
+                        let dispAlts = displayAlternativeNames(for: record)
                         VStack(alignment: .leading, spacing: 4)
                         {
                             Text("Name")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text(record.Name)
+                            Text(dispName)
                                 .font(.body)
                                 .fontWeight(.semibold)
+                                .contentShape(Rectangle())
+                                .onTapGesture
+                                {
+                                    let text = hexForCopy.isEmpty ? dispName : "\(dispName), \(hexForCopy)"
+                                    copyToPasteboard(text)
+                                }
                         }
                         .padding(.horizontal, 12)
 
                         // Alternative names
-                        if let altNames = record.AlternativeNames, !altNames.isEmpty
+                        if !dispAlts.isEmpty
                         {
                             VStack(alignment: .leading, spacing: 4)
                             {
                                 Text("Also Known As")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                ForEach(altNames, id: \.self)
+                                ForEach(dispAlts, id: \.self)
                                 { name in
                                     Text(name)
                                         .font(.body)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture
+                                        {
+                                            let text = hexForCopy.isEmpty ? name : "\(name), \(hexForCopy)"
+                                            copyToPasteboard(text)
+                                        }
                                 }
-                            }
-                            .padding(.horizontal, 12)
-                        }
-                        else if let altName = record.AlternativeName
-                        {
-                            VStack(alignment: .leading, spacing: 4)
-                            {
-                                Text("Also Known As")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text(altName)
-                                    .font(.body)
                             }
                             .padding(.horizontal, 12)
                         }
@@ -335,7 +344,7 @@ extension ContentView
 
                             if let hex = record.Hex
                             {
-                                colorInfoRow(label: "Hex", value: hex.AsString())
+                                colorInfoRow(label: "Hex", value: "0x\(hex.AsString())")
                             }
                             if let rgb = record.RGB
                             {
@@ -411,9 +420,23 @@ extension ContentView
             Text(value)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundColor(.primary)
-                .textSelection(.enabled)
             Spacer()
         }
+        .contentShape(Rectangle())
+        .onTapGesture
+        {
+            copyToPasteboard(value)
+        }
+    }
+
+    func copyToPasteboard(_ text: String)
+    {
+        #if os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #else
+        UIPasteboard.general.string = text
+        #endif
     }
 
     /// Simple wrapping tag layout
