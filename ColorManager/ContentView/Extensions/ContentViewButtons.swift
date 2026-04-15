@@ -21,7 +21,11 @@ extension ContentView
     {
         Button(action: { handleEdit() })
         {
-            Text("Edit")
+#if os(macOS)
+       Text("Edit")
+#else
+            Image(systemName: "pencil")
+#endif
         }
         .help("Edit the selected color")
         .toolbarButtonStyle()
@@ -31,7 +35,11 @@ extension ContentView
     {
         Button(action: { handleCamera() })
         {
+#if os(macOS)
+            Text("Camera")
+#else
             Image(systemName: "camera")
+#endif
         }
         .help("Use the system's camera to match a color")
         .toolbarButtonStyle(prominent: false)
@@ -41,7 +49,11 @@ extension ContentView
     {
         Button(action: { handleSearch() })
         {
+#if os(macOS)
+            Text("Search")
+#else
             Image(systemName: "magnifyingglass")
+#endif
         }
         .help("Search for colors")
         .toolbarButtonStyle(prominent: false)
@@ -51,7 +63,11 @@ extension ContentView
     {
         Button(action: { handleFilter() })
         {
+#if os(macOS)
+            Text("Filter")
+#else
             Image(systemName: "line.3.horizontal.decrease.circle")
+#endif
         }
         .help("Filter colors")
         .toolbarButtonStyle(prominent: false)
@@ -61,7 +77,11 @@ extension ContentView
     {
         Button(action: { handleImport() })
         {
+#if os(macOS)
+            Text("Import")
+#else
             Image(systemName: "square.and.arrow.down")
+#endif
         }
         .help("Import colors from a file")
         .toolbarButtonStyle(prominent: false)
@@ -71,7 +91,11 @@ extension ContentView
     {
         Button(action: { handleExport() })
         {
+#if os(macOS)
+            Text("Export")
+#else
             Image(systemName: "square.and.arrow.up")
+#endif
         }
         .help("Export colors to a file")
         .toolbarButtonStyle(prominent: false)
@@ -81,7 +105,11 @@ extension ContentView
     {
         Button(action: { handleExport() })
         {
+#if os(macOS)
+            Text("Palette")
+#else
             Image(systemName: "paintpalette")
+#endif
         }
         .help("Create a palette and apply it to an image")
         .toolbarButtonStyle(prominent: false)
@@ -91,17 +119,37 @@ extension ContentView
     {
         Button(action: { handleExport() })
         {
+#if os(macOS)
+            Text("Create")
+#else
             Image(systemName: "asterisk.circle.fill")
+#endif
         }
         .help("Create a color using English or math")
         .toolbarButtonStyle(prominent: false)
+    }
+    
+    var ViewBy: some View
+    {
+        Picker("", selection: $ViewStyle)
+        {
+            Image(systemName: "square.grid.2x2")
+                .tag(0)
+            Image(systemName: "list.bullet")
+                .tag(1)
+        }
+        .pickerStyle(.segmented)
     }
     
     var infoButton: some View
     {
         Button(action: { ShowColorInfo() })
         {
+#if os(macOS)
+            Text("Color Info")
+#else
             Image(systemName: ShowColorInfoPanel ? "info.circle.fill" : "info.circle")
+#endif
         }
         .help("Show color information")
         .toolbarButtonStyle(prominent: false)

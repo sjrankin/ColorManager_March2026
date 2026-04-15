@@ -38,6 +38,9 @@ class ColorListXMLParser: NSObject, XMLParserDelegate
     // Current builders
     private var currentColorBuilder: ColorRecordBuilder?
     private var currentVersionBuilder: VersionBlockBuilder?
+
+    // Counter for assigning fallback names to colors with no Name attribute
+    private var unnamedColorCount = 0
     
     // MARK: - XMLParserDelegate Methods
     
@@ -83,6 +86,15 @@ class ColorListXMLParser: NSObject, XMLParserDelegate
         switch elementName.lowercased()
         {
             case "color":
+                if let builder = currentColorBuilder
+                {
+                    if builder.name.isEmpty
+                    {
+                        unnamedColorCount += 1
+                        builder.name = "COLOR\(unnamedColorCount)"
+                        print("⚠️ Color with no Name attribute assigned fallback: \(builder.name)")
+                    }
+                }
                 if let builder = currentColorBuilder,
                    let colorRecord = builder.build()
                 {

@@ -18,7 +18,7 @@ import UIKit
 extension ContentView
 {
     /// Toolbar with action buttons
-     var toolbarView: some View
+    var toolbarView: some View
     {
         HStack(spacing: 8)
         {
@@ -26,6 +26,7 @@ extension ContentView
             cameraButton
             searchButton
             filterButton
+            ViewBy
                 .padding(.trailing, 16)
             importButton
             exportButton
@@ -45,18 +46,26 @@ extension ContentView
     }
     
     /// Main color grid with scroll view
-     var colorGridView: some View
+    var colorGridView: some View
     {
         HSplitView
         {
             // Left side - Tree structure
             structureNavigator
                 .frame(minWidth: 200, idealWidth: 250, maxWidth: 400)
-
+            
             // Center - Color grid
-            colorDisplayArea
-                .frame(minWidth: 400)
-
+            if ViewStyles.Is(ViewStyle) == .Swatches
+            {
+                ColorSwatchDisplay
+                    .frame(minWidth: 400)
+            }
+            else
+            {
+                ColorListDisplay
+                    .frame(minWidth: 400)
+            }
+            
             // Right side - Color info panel (visible when toggled)
             if ShowColorInfoPanel
             {
@@ -73,7 +82,7 @@ extension ContentView
     }
     
     /// Left side navigation tree
-     var structureNavigator: some View
+    var structureNavigator: some View
     {
         VStack(spacing: 0)
         {
@@ -170,7 +179,7 @@ extension ContentView
     }
     
     /// Right side color display area
-     var colorDisplayArea: some View
+    var ColorSwatchDisplay: some View
     {
         ScrollView
         {
@@ -186,8 +195,54 @@ extension ContentView
         .background(PaletteBackground)
     }
     
+    var ColorListDisplay: some View
+    {
+        ScrollView
+        {
+            VStack(spacing: 0)
+            {
+                colorListView
+                clearSelectionSpacer
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .contentShape(Rectangle())
+            .onTapGesture { clearSelection() }
+        }
+        .background(PaletteBackground)
+    }
+    
+    @ViewBuilder var colorListView: some View
+    {
+        let allColors = getAllColors()
+
+        if allColors.isEmpty
+        {
+            emptyStateView
+        }
+        else
+        {
+            LazyVStack(spacing: 0)
+            {
+                ForEach(allColors, id: \.id)
+                {
+                    colorRecord in
+                    ColorListRowView(ColorRecord: colorRecord,
+                        SwatchColor: colorFromRecord(colorRecord),
+                        HexValue: valueFromRecord(colorRecord),
+                        IsSelected: colorRecord.id == SelectedSwatch,
+                        OnTap:
+                        {
+                            SelectedSwatch = colorRecord.id
+                            SelectedColorRecord = colorRecord
+                        })
+                }
+            }
+            .padding(.top, 4)
+        }
+    }
+    
     /// Grid of color swatches
-     var colorGrid: some View
+    var colorGrid: some View
     {
         LazyVGrid(columns: PaletteColumns, spacing: 8)
         {
@@ -199,12 +254,14 @@ extension ContentView
             }
             else
             {
-                ForEach(allColors, id: \.id)
+                ForEach(Array(allColors.enumerated()), id: \.element.id)
                 {
-                    colorRecord in
-                    SwatchView(SelectedID: $SelectedSwatch,
+                    index, colorRecord in
+                    let name = colorRecord.Name
+                    SwatchView(ColorID: colorRecord.id,
+                               SelectedID: $SelectedSwatch,
                                SwatchColor: colorFromRecord(colorRecord),
-                               SwatchColorName: displayName(for: colorRecord),
+                               SwatchColorName: name,
                                SwatchColorValue: valueFromRecord(colorRecord),
                                SwatchWidth: SwatchSize,
                                onTap: { SelectedColorRecord = colorRecord })
@@ -216,7 +273,7 @@ extension ContentView
     }
     
     /// Empty state when no colors are loaded
-     var emptyStateView: some View
+    var emptyStateView: some View
     {
         Text("No colors loaded")
             .foregroundColor(.secondary)
@@ -224,14 +281,14 @@ extension ContentView
     }
     
     /// Spacer that clears selection when tapped
-     var clearSelectionSpacer: some View
+    var clearSelectionSpacer: some View
     {
         Color.clear
             .frame(minHeight: 100)
             .contentShape(Rectangle())
             .onTapGesture { clearSelection() }
     }
-
+    
     /// Right-side color info panel
     var colorInfoPanel: some View
     {
@@ -251,9 +308,9 @@ extension ContentView
 #else
             .background(Color(uiColor: .systemBackground))
 #endif
-
+            
             Divider()
-
+            
             if let record = SelectedColorRecord
             {
                 ScrollView
@@ -279,7 +336,7 @@ extension ContentView
                                 .padding(.horizontal, 12)
                                 .padding(.top, 12)
                         }
-
+                        
                         // Color swatch preview
                         colorFromRecord(record)
                             .frame(maxWidth: .infinity)
@@ -287,11 +344,11 @@ extension ContentView
                             .cornerRadius(6)
                             .padding(.horizontal, 12)
                             .padding(.top, path.count >= 1 ? 4 : 12)
-
+                        
                         // Name
                         let hexForCopy = record.Hex.map { "0x\($0.AsString())" } ?? ""
-                        let dispName = displayName(for: record)
-                        let dispAlts = displayAlternativeNames(for: record)
+                        let dispName = record.Name
+                        let dispAlts: [String] = record.AlternativeNames ?? record.AlternativeName.map { [$0] } ?? []
                         VStack(alignment: .leading, spacing: 4)
                         {
                             Text("Name")
@@ -302,13 +359,13 @@ extension ContentView
                                 .fontWeight(.semibold)
                                 .contentShape(Rectangle())
                                 .onTapGesture
-                                {
-                                    let text = hexForCopy.isEmpty ? dispName : "\(dispName), \(hexForCopy)"
-                                    copyToPasteboard(text)
-                                }
+                            {
+                                let text = hexForCopy.isEmpty ? dispName : "\(dispName), \(hexForCopy)"
+                                copyToPasteboard(text)
+                            }
                         }
                         .padding(.horizontal, 12)
-
+                        
                         // Alternative names
                         if !dispAlts.isEmpty
                         {
@@ -323,25 +380,25 @@ extension ContentView
                                         .font(.body)
                                         .contentShape(Rectangle())
                                         .onTapGesture
-                                        {
-                                            let text = hexForCopy.isEmpty ? name : "\(name), \(hexForCopy)"
-                                            copyToPasteboard(text)
-                                        }
+                                    {
+                                        let text = hexForCopy.isEmpty ? name : "\(name), \(hexForCopy)"
+                                        copyToPasteboard(text)
+                                    }
                                 }
                             }
                             .padding(.horizontal, 12)
                         }
-
+                        
                         Divider()
                             .padding(.horizontal, 12)
-
+                        
                         // Color space values
                         VStack(alignment: .leading, spacing: 8)
                         {
                             Text("Color Values")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-
+                            
                             if let hex = record.Hex
                             {
                                 colorInfoRow(label: "Hex", value: "0x\(hex.AsString())")
@@ -368,13 +425,13 @@ extension ContentView
                             }
                         }
                         .padding(.horizontal, 12)
-
+                        
                         // Tags
                         if let tags = record.Tags, !tags.isEmpty
                         {
                             Divider()
                                 .padding(.horizontal, 12)
-
+                            
                             VStack(alignment: .leading, spacing: 4)
                             {
                                 Text("Tags")
@@ -384,7 +441,30 @@ extension ContentView
                             }
                             .padding(.horizontal, 12)
                         }
-
+                        
+                        // Raw XML definition
+                        if let xml = record.XMLDefinition
+                        {
+                            Divider()
+                                .padding(.horizontal, 12)
+                            
+                            VStack(alignment: .leading, spacing: 4)
+                            {
+                                Text("XML Definition")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text(xml)
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.primary)
+                                    .textSelection(.enabled)
+                                    .lineLimit(nil)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { copyToPasteboard(xml) }
+                            }
+                            .padding(.horizontal, 12)
+                        }
+                        
                         Spacer(minLength: 12)
                     }
                 }
@@ -406,7 +486,7 @@ extension ContentView
         .background(Color(uiColor: .systemBackground))
 #endif
     }
-
+    
     /// A single label/value row for color space info
     @ViewBuilder
     func colorInfoRow(label: String, value: String) -> some View
@@ -428,27 +508,27 @@ extension ContentView
             copyToPasteboard(value)
         }
     }
-
+    
     func copyToPasteboard(_ text: String)
     {
-        #if os(macOS)
+#if os(macOS)
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
-        #else
+#else
         UIPasteboard.general.string = text
-        #endif
+#endif
     }
-
+    
     /// Simple wrapping tag layout
     struct FlowLayout: View
     {
         let tags: [String]
-
+        
         init(_ tags: [String])
         {
             self.tags = tags
         }
-
+        
         var body: some View
         {
             // Use a simple vertical list for tags since flow layout needs iOS 16+

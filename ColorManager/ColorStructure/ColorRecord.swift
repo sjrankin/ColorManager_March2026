@@ -31,6 +31,8 @@ struct ColorRecord: Identifiable, Equatable
     let LAB: LABRecord?
     let Variant: [ColorVariant]?
     var Replaces: UUID?
+    /// Raw XML element string as read from the source file (e.g. `<Color Name="Red" Hex="ff0000"/>`).
+    let XMLDefinition: String?
     
     var CanonicalColorValue: String?
     {

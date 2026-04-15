@@ -23,6 +23,7 @@ struct ContentView: View
     @State var selectedGroupPath: [String] = [] // Track selected group hierarchy
     @State var expandedGroups: Set<String> = [] // Track expanded groups
     @State var ShowColorInfoPanel: Bool = false
+    @AppStorage("ViewStyle") var ViewStyle: Int = 0
     @State var SelectedColorRecord: ColorRecord? = nil
     
     #if os(macOS)
@@ -47,5 +48,17 @@ struct ContentView: View
             Divider()
             colorGridView
         }
+    }
+}
+
+enum ViewStyles: Int
+{
+    case Swatches = 0
+    case List = 1
+    
+    static func Is(_ Raw: Int) -> ViewStyles
+    {
+        guard let Converted = ViewStyles(rawValue: Raw) else { return .Swatches }
+        return Converted
     }
 }

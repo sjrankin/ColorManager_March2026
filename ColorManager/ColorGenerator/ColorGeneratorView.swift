@@ -32,6 +32,11 @@ struct ColorGeneratorView: View
                     TextField("", text: .constant(""))
                     Spacer()
                 }
+                // Camera button to use the device's camera to enter colors
+                Button("Camera")
+                {
+                    //open camera window here
+                }
             }
             Divider()
             HStack

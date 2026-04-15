@@ -9,9 +9,8 @@ import SwiftUI
 
 struct SwatchView: View
 {
-    var ColorID: UUID? = nil
+    var ColorID: UUID
     @Binding var SelectedID: UUID
-    @State private var InstanceID = UUID()
     var SwatchColor: Color = .red
     var SwatchColorName: String = "Test Name That Is Too Long"
     var SwatchColorValue: String = "0x000000"
@@ -28,7 +27,7 @@ struct SwatchView: View
     @State private var ShadowRadius: CGFloat = 2.0
     @State private var ShadowXOffset: CGFloat = 2.0
     @State private var ShadowYOffset: CGFloat = 2.0
-    
+
     var body: some View
     {
         VStack
@@ -55,13 +54,13 @@ struct SwatchView: View
                 y: ShadowYOffset)
         .onTapGesture
         {
-            SelectedID = InstanceID
+            SelectedID = ColorID
             onTap?()
         }
         .onChange(of: SelectedID)
         {
             old, new in
-            if new == InstanceID
+            if new == ColorID
             {
                 SwatchHeaderBackground = .white
                 BorderThickness = 2.0
@@ -93,7 +92,9 @@ struct SwatchView: View
 #Preview
 {
     @Previewable @State var SwatchID: UUID = UUID()
-    SwatchView(SelectedID: $SwatchID,
+    @Previewable @State var colorID: UUID = UUID()
+    SwatchView(ColorID: colorID,
+               SelectedID: $SwatchID,
                SwatchColor: .indigo,
                SwatchWidth: 86)
 }

@@ -20,7 +20,7 @@ import UIKit
 /// Helper class to build ColorRecord from XML attributes
 class ColorRecordBuilder
 {
-    private var name: String
+    var name: String
     private var alternativeName: String?
     private var alternativeNames: [String]?
     private var canonical: String?
@@ -35,7 +35,8 @@ class ColorRecordBuilder
     private var labRecord: LABRecord?
     
     private var firstDefinedColorSpace: String?
-    
+    private var xmlDefinition: String?
+
     // Known attribute names (for detecting unrecognized attributes)
     private static let knownAttributes: Set<String> = [
         "name", "Name",
@@ -56,7 +57,7 @@ class ColorRecordBuilder
     
     init(attributes: [String: String])
     {
-        self.name = attributes["name"] ?? attributes["Name"] ?? "Unnamed"
+        self.name = attributes["name"] ?? attributes["Name"] ?? ""
         self.alternativeName = attributes["aname"] ?? attributes["AName"]
         self.canonical = attributes["canonical"] ?? attributes["Canonical"]
         self.language = attributes["language"] ?? attributes["Language"]
@@ -81,9 +82,24 @@ class ColorRecordBuilder
         
         // Check for unrecognized attributes
         logUnrecognizedAttributes(attributes)
-        
+
         // Parse color spaces in order to determine first defined
         parseColorSpaces(from: attributes)
+
+        // Reconstruct the raw XML element string from attributes.
+        // Name is placed first; remaining attributes follow in sorted order.
+        var attrParts: [String] = []
+        if let nameVal = attributes["name"] ?? attributes["Name"] {
+            attrParts.append("Name=\"\(nameVal)\"")
+        }
+        let otherAttrs = attributes
+            .filter { $0.key.lowercased() != "name" }
+            .sorted { $0.key < $1.key }
+        for (key, value) in otherAttrs {
+            attrParts.append("\(key)=\"\(value)\"")
+        }
+        let attrString = attrParts.isEmpty ? "" : " \(attrParts.joined(separator: " "))"
+        xmlDefinition = "<Color\(attrString)/>"
     }
     
     /// Log any unrecognized attributes to help identify parsing issues
@@ -350,7 +366,8 @@ class ColorRecordBuilder
             CMYK: cmykRecord,
             LAB: labRecord,
             Variant: nil,
-            Replaces: nil)
+            Replaces: nil,
+            XMLDefinition: xmlDefinition)
         
         return FinalColor
     }
