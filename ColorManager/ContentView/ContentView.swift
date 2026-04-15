@@ -23,6 +23,7 @@ struct ContentView: View
     @State var selectedGroupPath: [String] = [] // Track selected group hierarchy
     @State var expandedGroups: Set<String> = [] // Track expanded groups
     @State var ShowColorInfoPanel: Bool = false
+    @State var ShowColorSearchView: Bool = false
     @AppStorage("ViewStyle") var ViewStyle: Int = 0
     @State var SelectedColorRecord: ColorRecord? = nil
     
@@ -47,6 +48,10 @@ struct ContentView: View
             toolbarView
             Divider()
             colorGridView
+        }
+        .sheet(isPresented: $ShowColorSearchView)
+        {
+            ColorSearchView()
         }
     }
 }
