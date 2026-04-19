@@ -14,6 +14,8 @@ import UIKit
 
 #if os(macOS)
 public typealias PlatformColor = NSColor
+public typealias PlatformImage = NSImage
 #else
 public typealias PlatformColor = UIColor
+public typealias PlatformImage = UIImage
 #endif

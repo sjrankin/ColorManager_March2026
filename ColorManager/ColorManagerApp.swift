@@ -11,16 +11,22 @@ import SwiftUI
 struct ColorManagerApp: App {
     @StateObject private var colorList = ColorList.shared
     
-    init() {
-        // Load initial base colors at startup
-        loadInitialBaseColors()
-    }
-    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(colorList)
+                .task {
+                    loadInitialBaseColors()
+                }
         }
+
+#if os(macOS)
+        Window("Color Searcher", id: "color-searcher") {
+            ColorSearchView()
+        }
+        .defaultSize(width: 700, height: 520)
+        .restorationBehavior(.disabled)
+#endif
     }
     
     /// Load the InitialBaseColors.xml file at app startup

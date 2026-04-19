@@ -141,6 +141,18 @@ extension ContentView
         .pickerStyle(.segmented)
     }
     
+#if !os(macOS)
+    var structureButton: some View
+    {
+        Button(action: { ShowStructureNavigator.toggle() })
+        {
+            Image(systemName: ShowStructureNavigator ? "sidebar.left" : "sidebar.left")
+        }
+        .help("Show color structure")
+        .toolbarButtonStyle(prominent: ShowStructureNavigator)
+    }
+#endif
+
     var infoButton: some View
     {
         Button(action: { ShowColorInfo() })

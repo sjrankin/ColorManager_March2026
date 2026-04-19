@@ -20,17 +20,17 @@ extension ContentView
     /// Toolbar with action buttons
     var toolbarView: some View
     {
+#if os(macOS)
         HStack(spacing: 8)
         {
             editButton
-            cameraButton
             searchButton
             filterButton
             ViewBy
-                .padding(.trailing, 16)
+                .padding(.trailing, GroupSpacer)
             importButton
             exportButton
-                .padding(.trailing, 16)
+                .padding(.trailing, GroupSpacer)
             paletteButton
             createColorButton
             infoButton
@@ -38,9 +38,30 @@ extension ContentView
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-#if os(macOS)
         .background(Color(nsColor: .controlBackgroundColor))
 #else
+        // iOS: scroll horizontally so all buttons remain reachable on narrow screens
+        ScrollView(.horizontal, showsIndicators: false)
+        {
+            HStack(spacing: 16)
+            {
+                structureButton
+                Divider().frame(height: 20)
+                editButton
+                searchButton
+                filterButton
+                ViewBy
+                Divider().frame(height: 20)
+                importButton
+                exportButton
+                Divider().frame(height: 20)
+                paletteButton
+                createColorButton
+                infoButton
+            }
+            .padding(.horizontal, 12)
+        }
+        .padding(.vertical, 8)
         .background(Color(uiColor: .systemBackground))
 #endif
     }
@@ -48,13 +69,14 @@ extension ContentView
     /// Main color grid with scroll view
     var colorGridView: some View
     {
+#if os(macOS)
         HSplitView
         {
             // Left side - Tree structure
             structureNavigator
                 .frame(minWidth: 200, idealWidth: 250, maxWidth: 400)
-            
-            // Center - Color grid
+
+            // Center - Color grid or list
             if ViewStyles.Is(ViewStyle) == .Swatches
             {
                 ColorSwatchDisplay
@@ -65,7 +87,7 @@ extension ContentView
                 ColorListDisplay
                     .frame(minWidth: 400)
             }
-            
+
             // Right side - Color info panel (visible when toggled)
             if ShowColorInfoPanel
             {
@@ -74,11 +96,41 @@ extension ContentView
             }
         }
         .onChange(of: selectedGroupPath)
-        {
-            _, _ in
+        { _, _ in
             SelectedSwatch = UUID.empty
             SelectedColorRecord = nil
         }
+#else
+        // iOS: full-width color display; navigator and info panel appear as sheets
+        Group
+        {
+            if ViewStyles.Is(ViewStyle) == .Swatches
+            {
+                ColorSwatchDisplay
+            }
+            else
+            {
+                ColorListDisplay
+            }
+        }
+        .sheet(isPresented: $ShowStructureNavigator)
+        {
+            structureNavigator
+                .presentationDetents([.medium, .large])
+                .presentationCornerRadius(16)
+        }
+        .sheet(isPresented: $ShowColorInfoPanel)
+        {
+            colorInfoPanel
+                .presentationDetents([.medium, .large])
+        }
+        .onChange(of: selectedGroupPath)
+        { _, _ in
+            SelectedSwatch = UUID.empty
+            SelectedColorRecord = nil
+            ShowStructureNavigator = false
+        }
+#endif
     }
     
     /// Left side navigation tree
@@ -102,6 +154,9 @@ extension ContentView
                 .buttonStyle(.plain)
                 .padding(.trailing, 12)
             }
+#if !os(macOS)
+            .padding(.top, 8)
+#endif
 #if os(macOS)
             .background(Color(nsColor: .controlBackgroundColor))
 #else

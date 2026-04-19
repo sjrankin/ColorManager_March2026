@@ -12,6 +12,8 @@ struct ColorGroup: Identifiable, Equatable
 {
     /// ID of the color group.
     let id = UUID()
+    /// ID read from the XML `Id` attribute. Nil if the source did not include one.
+    let Id: UUID?
     /// Name of the color group.
     let Name: String
     /// Optional short name of the color group. Assigned by the group's author if the long name is too long.

@@ -18,9 +18,11 @@ struct ColorSearchView: View
 {
     @Environment(\.dismiss) var Dismiss
     @State var SelectedOption: Int = 0
+    @State var SearchMethod: SearchRecord? = nil
 
     var body: some View
     {
+#if os(macOS)
         VStack(spacing: 0)
         {
             HStack
@@ -32,43 +34,88 @@ struct ColorSearchView: View
             }
             .padding()
             Divider()
-            NavigationSplitView
+            HStack(spacing: 0)
             {
                 ColorSearchOptionView(Option: $SelectedOption)
-            } detail: {
-                switch(SelectedOption)
+                    .frame(width: 140)
+                    .background(Color.secondary.opacity(0.08))
+                Divider()
+                Group
                 {
-                    case 0:
-                        ColorNameSearchView()
-                        
-                    case 1:
-                        ColorValueSearchView()
-                        
-                    case 2:
-                        ColorCameraSearchView()
-                        
-                    default:
-                        NoOptionView()
+                    switch SelectedOption
+                    {
+                        case 0: ColorNameSearchView(Searcher: $SearchMethod)
+                        case 1: ColorValueSearchView(Searcher: $SearchMethod)
+                        case 2: ColorCameraSearchView(Searcher: $SearchMethod)
+                        default: NoOptionView()
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
             }
             Divider()
             HStack
             {
                 Spacer()
-                Button("Search")
-                {
-
-                }
+                Button("Search") {}
                 Spacer()
-                Button("Cancel")
-                {
-                    self.Dismiss()
-                }
+                Button("Cancel") { self.Dismiss() }
                 Spacer()
             }
             .padding()
         }
-        .frame(height: 600)
+        .frame(minWidth: 500, minHeight: 400)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+#else
+        VStack(spacing: 0)
+        {
+            // Title
+            Text("Color Searcher")
+                .font(.title2.bold())
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+
+            Divider()
+
+            // Option picker replaces sidebar on compact screens
+            Picker("", selection: $SelectedOption)
+            {
+                Text("Name").tag(0)
+                Text("Color").tag(1)
+                Text("Camera").tag(2)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+
+            Divider()
+
+            // Detail content
+            Group
+            {
+                switch SelectedOption
+                {
+                    case 0: ColorNameSearchView(Searcher: $SearchMethod)
+                    case 1: ColorValueSearchView(Searcher: $SearchMethod)
+                    case 2: ColorCameraSearchView(Searcher: $SearchMethod)
+                    default: NoOptionView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            Divider()
+
+            HStack
+            {
+                Spacer()
+                Button("Search") {}
+                Spacer()
+                Button("Cancel") { self.Dismiss() }
+                Spacer()
+            }
+            .padding(.vertical, 12)
+        }
+#endif
     }
 }
 
@@ -83,60 +130,6 @@ struct NoOptionView: View
             {
                 Spacer()
                 Text("No search option set")
-                Spacer()
-            }
-            Spacer()
-        }
-    }
-}
-
-struct ColorNameSearchView: View
-{
-    var body: some View
-    {
-        VStack
-        {
-            Spacer()
-            HStack
-            {
-                Spacer()
-                Text("Color Name Search")
-                Spacer()
-            }
-            Spacer()
-        }
-    }
-}
-
-struct ColorValueSearchView: View
-{
-    var body: some View
-    {
-        VStack
-        {
-            Spacer()
-            HStack
-            {
-                Spacer()
-                Text("Color Value Search")
-                Spacer()
-            }
-            Spacer()
-        }
-    }
-}
-
-struct ColorCameraSearchView: View
-{
-    var body: some View
-    {
-        VStack
-        {
-            Spacer()
-            HStack
-            {
-                Spacer()
-                Text("Color Camera Search")
                 Spacer()
             }
             Spacer()

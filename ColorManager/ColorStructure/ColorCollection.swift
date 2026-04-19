@@ -12,6 +12,8 @@ struct ColorCollection: Identifiable, Equatable
 {
     /// ID of the collection.
     let id = UUID()
+    /// ID read from the XML `Id` attribute. Nil if the source did not include one.
+    let Id: UUID?
     /// Name of the collection. Not required to be unique.
     let Name: String
     /// Optional source for the colors. Usually an URL but not required to be.

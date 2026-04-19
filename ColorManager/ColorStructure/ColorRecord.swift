@@ -17,6 +17,8 @@ import Foundation
 struct ColorRecord: Identifiable, Equatable
 {
     let id = UUID()
+    /// ID read from the XML `Id` attribute. Nil if the source did not include one.
+    let Id: UUID?
     let Name: String //Name
     let AlternativeNames: [String]? //Names
     let AlternativeName: String? //AName

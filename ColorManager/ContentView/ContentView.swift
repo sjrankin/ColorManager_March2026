@@ -24,8 +24,17 @@ struct ContentView: View
     @State var expandedGroups: Set<String> = [] // Track expanded groups
     @State var ShowColorInfoPanel: Bool = false
     @State var ShowColorSearchView: Bool = false
+#if !os(macOS)
+    @State var ShowStructureNavigator: Bool = false
+#endif
     @AppStorage("ViewStyle") var ViewStyle: Int = 0
     @State var SelectedColorRecord: ColorRecord? = nil
+    
+#if os(macOS)
+    let GroupSpacer: Double = 16
+#else
+    let GroupSpacer: Double = 0.0
+#endif
     
     #if os(macOS)
     @State var PaletteBackground: Color = Color(nsColor: NSColor.controlBackgroundColor)
@@ -40,7 +49,11 @@ struct ContentView: View
     ]
     
     var SwatchSize: CGFloat = 90
-    
+
+#if os(macOS)
+    @Environment(\.openWindow) var openWindow
+#endif
+
     var body: some View
     {
         VStack(spacing: 0)
@@ -49,9 +62,24 @@ struct ContentView: View
             Divider()
             colorGridView
         }
+#if os(macOS)
+        .onChange(of: ShowColorSearchView)
+        { _, newValue in
+            if newValue
+            {
+                openWindow(id: "color-searcher")
+                ShowColorSearchView = false
+            }
+        }
+#else
         .sheet(isPresented: $ShowColorSearchView)
         {
             ColorSearchView()
+        }
+#endif
+        .sheet(isPresented: $ShowCameraMatchView)
+        {
+            ColorCameraSearchView(Searcher: .constant(nil))
         }
     }
 }

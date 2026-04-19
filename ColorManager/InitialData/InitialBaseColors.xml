@@ -18,14 +18,14 @@
 <Written Date="1-Apr-2026"/>
 </SaveData>
 </VersionBlock>
-<ColorGroup Name="Base Initial Colors">
-<Color Name="Black" Hex="000000"/>
-<Color Name="White" Hex="ffffff"/>
-<Color Name="Red" Hex="ff0000"/>
-<Color Name="Green" Hex="00ff00"/>
-<Color Name="Blue" Hex="0000ff"/>
-<Color Name="Yellow" Hex="ffff00"/>
-<Color Name="Purple" Hex="ff00ff"/>
-<Color Name="Cyan" Hex="00ffff"/>
+<ColorGroup Name="Base Initial Colors" Id="889781b9-520f-4480-b2e3-596e6c9b7ccd">
+<Color Name="Black" Hex="000000" Id="1ac1dc4b-2d7c-4c1a-94bd-f8153e8ac5e9"/>
+<Color Name="White" Hex="ffffff" Id="1256dacb-113f-4362-af61-44a797403000"/>
+<Color Name="Red" Hex="ff0000" Id="9a560843-adea-4a1b-adff-557ccc7b8a4f"/>
+<Color Name="Green" Hex="00ff00" Id="f03a2932-95ad-45f8-bd60-98ac23396d23"/>
+<Color Name="Blue" Hex="0000ff" Id="6b8aaaaa-b15b-4b98-bbe5-f0dfb0dcaebc"/>
+<Color Name="Yellow" Hex="ffff00" Id="b1a1f69f-8f1c-4557-8c39-98182363655d"/>
+<Color Name="Purple" Hex="ff00ff" Id="e985f163-6b77-4829-80a0-c8b1d23ae7a2"/>
+<Color Name="Cyan" Hex="00ffff" Id="6dbbc951-c78f-418b-bb2a-f71ef9cd22a8"/>
 </ColorGroup>
 </Colors>

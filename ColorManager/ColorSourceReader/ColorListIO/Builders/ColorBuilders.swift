@@ -37,8 +37,11 @@ class ColorRecordBuilder
     private var firstDefinedColorSpace: String?
     private var xmlDefinition: String?
 
+    private var sourceId: UUID?
+
     // Known attribute names (for detecting unrecognized attributes)
     private static let knownAttributes: Set<String> = [
+        "id", "Id",
         "name", "Name",
         "aname", "AName",
         "names", "Names", "anames", "ANames",
@@ -54,9 +57,12 @@ class ColorRecordBuilder
         "variant",
         "replaces"
     ]
-    
+
     init(attributes: [String: String])
     {
+        if let idStr = attributes["Id"] ?? attributes["id"] {
+            self.sourceId = UUID(uuidString: idStr)
+        }
         self.name = attributes["name"] ?? attributes["Name"] ?? ""
         self.alternativeName = attributes["aname"] ?? attributes["AName"]
         self.canonical = attributes["canonical"] ?? attributes["Canonical"]
@@ -353,7 +359,8 @@ class ColorRecordBuilder
             print("Non-ASCII color name.")
         }
         
-        let FinalColor = ColorRecord(Name: name,
+        let FinalColor = ColorRecord(Id: sourceId,
+            Name: name,
             AlternativeNames: alternativeNames,
             AlternativeName: alternativeName,
             Canonical: finalCanonical,
@@ -377,6 +384,7 @@ class ColorRecordBuilder
 class ColorGroupBuilder
 {
     var name: String
+    var sourceId: UUID?
     var shortName: String?
     var className: String?
     var alias: String?
@@ -384,13 +392,16 @@ class ColorGroupBuilder
     var legal: String?
     var testGroup: Bool?
     var notes: String?
-    
+
     var colors: [ColorRecord] = []
     var groups: [ColorGroup] = []
     var collections: [ColorCollection] = []
-    
+
     init(attributes: [String: String])
     {
+        if let idStr = attributes["Id"] ?? attributes["id"] {
+            self.sourceId = UUID(uuidString: idStr)
+        }
         self.name = attributes["name"] ?? attributes["Name"] ?? "Unnamed Group"
         self.shortName = attributes["shortName"] ?? attributes["ShortName"]
         self.className = attributes["className"] ?? attributes["ClassName"]
@@ -398,16 +409,17 @@ class ColorGroupBuilder
         self.legal = attributes["legal"]
         self.notes = attributes["notes"]
         self.testGroup = (attributes["testGroup"] ?? attributes["TestGroup"]) == "true"
-        
+
         if let sourceStr = attributes["source"]
         {
             self.source = sourceStr.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) }
         }
     }
-    
+
     func build() -> ColorGroup
     {
         return ColorGroup(
+            Id: sourceId,
             Name: name,
             ShortName: shortName,
             ClassName: className,
@@ -427,17 +439,21 @@ class ColorGroupBuilder
 class ColorCollectionBuilder
 {
     var name: String
+    var sourceId: UUID?
     var source: String?
     var notes: String?
     var className: String?
     var font: String?
-    
+
     var colors: [ColorRecord] = []
     var groups: [ColorGroup] = []
     var collections: [ColorCollection] = []
 
     init(attributes: [String: String])
     {
+        if let idStr = attributes["Id"] ?? attributes["id"] {
+            self.sourceId = UUID(uuidString: idStr)
+        }
         self.name = attributes["name"] ?? attributes["Name"] ?? "Unnamed Collection"
         self.source = attributes["source"]
         self.notes = attributes["notes"]
@@ -448,6 +464,7 @@ class ColorCollectionBuilder
     func build() -> ColorCollection
     {
         return ColorCollection(
+            Id: sourceId,
             Name: name,
             Source: source,
             Notes: notes,
